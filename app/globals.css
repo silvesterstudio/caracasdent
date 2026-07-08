@@ -1,0 +1,47 @@
+/* Caracaș Dental — base styles. */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #f4f6f6;
+  font-family: var(--font-nunito), "Nunito", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+a {
+  color: #1c2b30;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #fe7183;
+}
+
+::selection {
+  background: #fe7183;
+  color: #ffffff;
+}
+
+/* collage image pop: zoom out from 120% to 100% over the first ~2s on appear */
+@keyframes cd-pop {
+  0% {
+    opacity: 0;
+    transform: scale(1.2);
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
