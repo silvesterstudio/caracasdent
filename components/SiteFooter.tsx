@@ -8,8 +8,8 @@ import { useEffect, useRef } from "react";
  * circle/dome) and flattens to a normal flat footer as it settles into place.
  */
 
-const FOOT_BG = "#17171c";
-const LIGHT = "#f1f1f3";
+const FOOT_BG = "#eb7180"; // brand coral — footer background
+const LIGHT = "#ffffff"; // white content on the coral footer
 const FONT = "var(--font-nunito), 'Nunito', system-ui, sans-serif";
 
 type FooterCopy = {
@@ -76,7 +76,7 @@ export default function SiteFooter({ footer, book, serif }: { footer: FooterCopy
   const inputStyle: React.CSSProperties = {
     appearance: "none",
     background: "transparent",
-    border: "1px solid rgba(255,255,255,0.18)",
+    border: "1px solid rgba(255,255,255,0.4)",
     borderRadius: "999px",
     padding: "18px 26px",
     fontFamily: FONT,
@@ -147,14 +147,14 @@ export default function SiteFooter({ footer, book, serif }: { footer: FooterCopy
                   width: "58px",
                   height: "58px",
                   borderRadius: "999px",
-                  background: LIGHT,
+                  background: "#ffffff",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
                 <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-                  <path d="M3 8h9M8.5 4l4 4-4 4" stroke="#17171c" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M3 8h9M8.5 4l4 4-4 4" stroke="#eb7180" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             </div>

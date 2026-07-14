@@ -13,13 +13,25 @@ import ImageSlot from "./ImageSlot";
  * under the image fills continuously.
  */
 
-// Black section — the counter-beat in the light↔dark page rhythm.
-const BG = "#0a0a0c";
-const GRAD = "radial-gradient(120% 90% at 85% 8%, #17171b 0%, #0a0a0c 62%)";
-const ACCENT = "#fe7183"; // coral accent (black theme, not blue)
-const LIGHT = "#f1f1f3";
+// Light section — matches the rest of the page (only the footer stays dark).
+const BG = "#ffffff";
+const GRAD = "#f4f6f6";
+const ACCENT = "#fe7183"; // coral accent
+const INK = "#1c2b30";
 const FONT = "var(--font-nunito), 'Nunito', system-ui, sans-serif";
-const IMG_BG = "#141418";
+const IMG_BG = "#dbe3e3";
+
+// Mockup photography per service (Unsplash CDN, hotlinked) — one image for each of the
+// four services in order: Implantologie, Ortodonție, Terapie, Estetică dentară. Swap for the
+// clinic's real photography later; the layout is identical either way.
+const U = (id: string, w: number, h: number, faces = false) =>
+  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&q=80&w=${w}&h=${h}${faces ? "&crop=faces" : ""}`;
+const SERVICE_IMAGES = [
+  U("1588776813941-dcf9c55e84d2", 1000, 1300), // Implantologie — clinic / procedure
+  U("1567516364473-233c4b6fcfbe", 1000, 1300, true), // Ortodonție — straightened smile
+  U("1662837775286-7e6258c7c595", 1000, 1300), // Terapie — chairside checkup
+  U("1489278353717-f64c6ee8a4d2", 1000, 1300, true), // Estetică dentară — bright finished smile
+];
 
 type Step = { name: string; desc: string; points?: string[] };
 
@@ -100,7 +112,7 @@ export default function ServicesSection({
   }, [N]);
 
   return (
-    <section ref={rootRef} style={{ position: "relative", height: `${N * 100}vh`, background: BG }}>
+    <section id="servicii" ref={rootRef} style={{ position: "relative", height: `${N * 100}vh`, background: BG }}>
       <div style={{ position: "sticky", top: 0, height: "100vh", overflow: "hidden", background: GRAD }}>
         {/* ── TOP-CENTER: section title + intro ── */}
         <div style={{ position: "absolute", left: 0, right: 0, top: "7%", padding: "0 5%", textAlign: "center", zIndex: 2 }}>
@@ -124,7 +136,7 @@ export default function ServicesSection({
               fontSize: "clamp(40px,5.2vw,96px)",
               lineHeight: 0.98,
               letterSpacing: "-0.02em",
-              color: LIGHT,
+              color: INK,
             }}
           >
             {title}
@@ -134,7 +146,7 @@ export default function ServicesSection({
               fontFamily: FONT,
               fontSize: "clamp(14px,1.1vw,18px)",
               lineHeight: 1.5,
-              color: "rgba(241,241,243,0.55)",
+              color: "rgba(28,43,48,0.55)",
               maxWidth: "620px",
               margin: "16px auto 0",
             }}
@@ -161,10 +173,10 @@ export default function ServicesSection({
                 willChange: "opacity",
               }}
             >
-              <ImageSlot bg={IMG_BG} dark label={s.name} />
+              <ImageSlot bg={IMG_BG} src={SERVICE_IMAGES[i % SERVICE_IMAGES.length]} alt={s.name} label={s.name} />
             </div>
           ))}
-          <div style={{ position: "absolute", left: 0, right: 0, bottom: "-26px", height: "3px", background: "rgba(241,241,243,0.14)" }}>
+          <div style={{ position: "absolute", left: 0, right: 0, bottom: "-26px", height: "3px", background: "rgba(28,43,48,0.14)" }}>
             <div ref={barRef} style={{ height: "100%", width: "0%", background: ACCENT, transition: "width 0.12s linear" }} />
           </div>
         </div>
@@ -211,7 +223,7 @@ export default function ServicesSection({
                   fontSize: "clamp(38px,4.4vw,80px)",
                   lineHeight: 1.0,
                   letterSpacing: "-0.02em",
-                  color: LIGHT,
+                  color: INK,
                   marginBottom: "18px",
                 }}
               >
@@ -222,7 +234,7 @@ export default function ServicesSection({
                   fontFamily: FONT,
                   fontSize: "clamp(15px,1.15vw,19px)",
                   lineHeight: 1.55,
-                  color: "rgba(241,241,243,0.66)",
+                  color: "rgba(28,43,48,0.66)",
                   margin: "0 0 26px",
                   maxWidth: "92%",
                 }}
@@ -240,11 +252,11 @@ export default function ServicesSection({
                         justifyContent: "space-between",
                         gap: "16px",
                         padding: "13px 0",
-                        borderTop: "1px solid rgba(255,255,255,0.1)",
-                        borderBottom: pi === s.points!.length - 1 ? "1px solid rgba(255,255,255,0.1)" : undefined,
+                        borderTop: "1px solid rgba(28,43,48,0.12)",
+                        borderBottom: pi === s.points!.length - 1 ? "1px solid rgba(28,43,48,0.12)" : undefined,
                       }}
                     >
-                      <span style={{ fontFamily: FONT, fontSize: "clamp(14px,1.05vw,17px)", fontWeight: 600, color: "rgba(241,241,243,0.9)" }}>{pt}</span>
+                      <span style={{ fontFamily: FONT, fontSize: "clamp(14px,1.05vw,17px)", fontWeight: 600, color: "rgba(28,43,48,0.9)" }}>{pt}</span>
                       <span style={{ width: "6px", height: "6px", borderRadius: "999px", background: ACCENT, flex: "none" }} />
                     </div>
                   ))}
