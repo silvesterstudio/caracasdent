@@ -1,4 +1,39 @@
 /* Caracaș Dental — base styles. */
+
+/* ── PP Editorial New — the display / editorial serif (the italic "noastră",
+   section headlines, etc). It's a COMMERCIAL font, so it can't be pulled from a
+   CDN — self-host it: drop the two files below into /public/fonts/ and this
+   @font-face activates automatically. Until then everything using the editorial
+   stack falls back to Instrument Serif (loaded via next/font), which reads the
+   same. Files expected:
+     /public/fonts/PPEditorialNew-Regular.woff2
+     /public/fonts/PPEditorialNew-Italic.woff2                                */
+@font-face {
+  font-family: "PP Editorial New";
+  src: url("/fonts/PPEditorialNew-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PP Editorial New";
+  src: url("/fonts/PPEditorialNew-Italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Site font tokens — one sans (Inter Tight) + one editorial serif.
+   NB: the inner var() carries its OWN literal fallback ("Inter Tight" /
+   "Instrument Serif"). Without it, if next/font's --font-inter-tight ever
+   resolves empty (e.g. a dev HMR race), the whole token would become an
+   invalid value and font-family would collapse to the browser default serif
+   (Times). The literal fallback keeps the token valid and sans/serif-correct. */
+:root {
+  --sans: var(--font-inter-tight, "Inter Tight"), system-ui, sans-serif;
+  --editorial: "PP Editorial New", var(--font-instrument, "Instrument Serif"), Georgia, serif;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -11,7 +46,7 @@ body {
 
 body {
   background: #f4f6f6;
-  font-family: var(--font-nunito), "Nunito", system-ui, sans-serif;
+  font-family: var(--sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
@@ -29,6 +64,28 @@ a:hover {
 ::selection {
   background: #fe7183;
   color: #ffffff;
+}
+
+/* expanded-menu hovers: big serif links + utility rows tint coral; the B&W
+   service cards colorize and gently zoom */
+.cd-menu-big {
+  transition: color 0.3s ease;
+}
+.cd-menu-big:hover {
+  color: #eb7180 !important;
+}
+.cd-menu-util {
+  transition: color 0.3s ease;
+}
+.cd-menu-util:hover {
+  color: #eb7180 !important;
+}
+.cd-menu-card img {
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), filter 0.4s ease;
+}
+.cd-menu-card:hover img {
+  transform: scale(1.05);
+  filter: grayscale(0) !important;
 }
 
 /* collage image pop: zoom out from 120% to 100% over the first ~2s on appear */

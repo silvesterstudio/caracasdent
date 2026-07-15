@@ -1,21 +1,22 @@
 import type { Metadata } from "next";
-import { Nunito, Instrument_Serif } from "next/font/google";
+import { Inter_Tight, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
 
-// Nunito — the brandbook's endorsed web font (covers Latin + Cyrillic for RO/RU).
-// (The primary "Avoidance Genevra" display font isn't freely available; Nunito is
-// the brandbook's named alternative.)
-const nunito = Nunito({
+// Inter Tight — the site's sans, used for ALL UI / body / labels and the hero's
+// main display line ("Dinții tăi, Misiunea …"). Covers Latin + Cyrillic (RO/RU).
+const interTight = Inter_Tight({
   subsets: ["latin", "cyrillic"],
-  weight: ["400", "600", "700", "800", "900"],
+  weight: ["300", "400", "500", "600", "700", "800"],
   style: ["normal", "italic"],
-  variable: "--font-nunito",
+  variable: "--font-inter-tight",
   display: "swap",
 });
 
-// Instrument Serif — used for Romanian (Latin only). Russian falls back to
-// Georgia (a system serif with Cyrillic) via the component's per-language font.
+// Instrument Serif — the FALLBACK editorial serif. The design calls for
+// "PP Editorial New" (a commercial face, self-hosted via @font-face in
+// globals.css); until that file is present the editorial words render in
+// Instrument Serif, which shares the same high-contrast editorial character.
 const instrument = Instrument_Serif({
   subsets: ["latin"],
   weight: "400",
@@ -36,7 +37,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ro" className={`${nunito.variable} ${instrument.variable}`}>
+    <html lang="ro" className={`${interTight.variable} ${instrument.variable}`}>
       <body>
         <SmoothScroll>{children}</SmoothScroll>
       </body>

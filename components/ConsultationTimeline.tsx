@@ -19,7 +19,7 @@ import ImageSlot from "./ImageSlot";
 const BG = "#ffffff";
 const INK = "#1c2b30";
 const ACCENT = "#fe7183";
-const FONT = "var(--font-nunito), 'Nunito', system-ui, sans-serif";
+const FONT = "var(--sans)";
 const IMG_BG = "#dbe3e3";
 
 // Wide, on-brand clinic photography (Unsplash CDN) — one per step, in order.
@@ -121,7 +121,7 @@ export default function ConsultationTimeline({
   );
 
   return (
-    <section ref={rootRef} style={{ position: "relative", background: BG, padding: "16vh 0 18vh" }}>
+    <section id="drumul" ref={rootRef} style={{ position: "relative", background: BG, padding: "16vh 0 18vh" }}>
       {/* ── header: eyebrow + big serif title with the small italic label nested ── */}
       <div style={{ textAlign: "center", padding: "0 6%", marginBottom: "11vh" }}>
         <div

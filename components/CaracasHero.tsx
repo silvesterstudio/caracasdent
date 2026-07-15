@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useLenis } from "lenis/react";
 import ImageSlot from "./ImageSlot";
 import EchipaSection from "./EchipaSection";
@@ -23,13 +23,13 @@ import SiteFooter from "./SiteFooter";
  *     scroll window where it's actually visible.
  */
 
-// The hero uses exactly TWO typefaces, nothing else:
-//   • Nunito       — all UI / body / labels (FONT)
-//   • Instrument Serif — every display headline (SERIF)
-// (Instrument Serif is Latin-only, so RU Cyrillic falls back to a generic serif;
-//  we intentionally do NOT introduce Georgia as a third face.)
-const FONT = "var(--font-nunito), 'Nunito', system-ui, sans-serif";
-const SERIF = "var(--font-instrument), 'Instrument Serif', serif";
+// The site uses exactly TWO typefaces, nothing else:
+//   • Inter Tight       — all UI / body / labels + the hero's main display line (FONT)
+//   • PP Editorial New   — every editorial headline / italic accent word (SERIF)
+// (PP Editorial New is self-hosted via @font-face in globals.css; where it's not
+//  present it falls back to Instrument Serif. Tokens live in :root as --sans / --editorial.)
+const FONT = "var(--sans)";
+const SERIF = "var(--editorial)";
 
 // Brand palette — kept deliberately tight: dark ink, white, one light neutral,
 // and a single coral accent. No other colours in the hero.
@@ -53,11 +53,24 @@ const DOCTOR_CANDIDS = [
   U("1662837775286-7e6258c7c595", 700, 900),
   U("1663185551550-f8f56529ac5e", 700, 900),
 ];
-const CLINIC_IMAGES = [
-  U("1588776813941-dcf9c55e84d2", 900, 520),
-  U("1662837775272-545d8e143ad0", 900, 520),
-  U("1663185551550-f8f56529ac5e", 900, 520),
-  U("1683349370055-7eba66a404c6", 900, 520),
+// ── "Cine suntem?" — ONE tall photo at a time shared by all 4 collage strips. Each
+//    strip is a clipped window onto its quarter of the current image, so the 12px
+//    gaps read as cuts through a single picture (and it parallaxes behind them).
+//    The roster below rotates every 1.5s with a scan-line wipe — swap in the
+//    clinic's real team photography later (keep the tall ~2:3 portrait crop).
+const CINE_IMAGES = [
+  U("1588776813941-dcf9c55e84d2", 1000, 1500),
+  U("1674775372058-c4c8813c6611", 1000, 1500, true),
+  U("1670191247079-f9713ae06dcf", 1000, 1500, true),
+  U("1683349370055-7eba66a404c6", 1000, 1500),
+  U("1667133295308-9ef24f71952e", 1000, 1500, true),
+];
+// ── expanded-menu service cards (square crops of the 4 service photos, shown B&W like the reference)
+const MENU_SERVICE_IMAGES = [
+  U("1588776813941-dcf9c55e84d2", 600, 600), // Implantologie
+  U("1567516364473-233c4b6fcfbe", 600, 600, true), // Ortodonție
+  U("1662837775286-7e6258c7c595", 600, 600), // Terapie
+  U("1489278353717-f64c6ee8a4d2", 600, 600, true), // Estetică dentară
 ];
 // ── "after" result photos: bright, clean, repaired smiles for the Rezultate portfolio.
 const RESULT_IMAGES = [
@@ -81,6 +94,8 @@ type Doctor = {
 };
 type Copy = {
   nav: { menu: string; services: string; patientForm: string; city: string; contact: string; basedIn: string };
+  menuLinks: { label: string; target: string }[]; // the BIG serif links (2-col grid, reference "About Us / Laboratory / …")
+  menuUtility: { label: string; target: string }[]; // small arrowed rows bottom-left (reference "Patient form / FAQ")
   hero: {
     l1: string;
     l2: string;
@@ -94,6 +109,7 @@ type Copy = {
   marquee: string;
   goalTitle: string;
   paragraph: string;
+  aboutMore: string;
   team: string;
   teamTitle: string;
   teamLead: string;
@@ -118,6 +134,16 @@ type Copy = {
 const COPY: Record<"ro" | "ru", Copy> = {
   ro: {
     nav: { menu: "Meniu", services: "Servicii", patientForm: "Formular pacient", city: "Chișinău", contact: "Contactează-ne", basedIn: "Ne găsești în" },
+    menuLinks: [
+      { label: "Echipa", target: "#echipa" },
+      { label: "Rezultate", target: "#rezultate" },
+      { label: "Drumul tău", target: "#drumul" },
+      { label: "Contact", target: "footer" },
+    ],
+    menuUtility: [
+      { label: "Formular pacient", target: "footer" },
+      { label: "Întrebări frecvente", target: "#faq" },
+    ],
     hero: {
       l1: "Dinții tăi,",
       l2: "Misiunea",
@@ -133,9 +159,13 @@ const COPY: Record<"ro" | "ru", Copy> = {
       chosenBy: "Îngrijiți de familia Caracaș",
     },
     marquee: "Zâmbetul ca limbaj de comunicare",
-    goalTitle: "Scopul nostru",
+    goalTitle: "Cine suntem?",
+    // condensed from the company history (1992, Bender — Dr. Ion + Dr. Elena Caracaș,
+    // 25+ ani, parteneriate exclusive, valori: înțelegere și siguranță)
+    // *runs* render in the editorial italic (mosaicist-style accents)
     paragraph:
-      "să oferim îngrijire dentară și estetică de talie mondială, prin tehnici avansate, tratamente personalizate și un nivel de servicii impecabil care face fiecare pacient să se simtă valoros.",
+      "O *familie de medici* cu o istorie de peste 25 de ani: din 1992, când *Dr. Ion Caracaș* și *Dr. Elena Caracaș* au deschis prima clinică privată, construim stomatologie bazată pe înțelegere, siguranță și cele mai înalte standarde.",
+    aboutMore: "Mai multe",
     team: "Echipa noastră:",
     teamTitle: "Echipa noastră",
     teamLead: "Medici cu experiență, dedicați fiecărui zâmbet.",
@@ -262,6 +292,16 @@ const COPY: Record<"ro" | "ru", Copy> = {
   },
   ru: {
     nav: { menu: "Меню", services: "Услуги", patientForm: "Анкета пациента", city: "Кишинёв", contact: "Свяжитесь с нами", basedIn: "Мы находимся в" },
+    menuLinks: [
+      { label: "Команда", target: "#echipa" },
+      { label: "Результаты", target: "#rezultate" },
+      { label: "Ваш путь", target: "#drumul" },
+      { label: "Контакты", target: "footer" },
+    ],
+    menuUtility: [
+      { label: "Анкета пациента", target: "footer" },
+      { label: "Частые вопросы", target: "#faq" },
+    ],
     hero: {
       l1: "Ваши зубы,",
       l2: "наша",
@@ -277,9 +317,10 @@ const COPY: Record<"ro" | "ru", Copy> = {
       chosenBy: "О вас заботится семья Каракаш",
     },
     marquee: "Улыбка — язык общения",
-    goalTitle: "Наша цель",
+    goalTitle: "Кто мы?",
     paragraph:
-      "предоставлять стоматологический и эстетический уход мирового уровня — с помощью передовых методик, индивидуальных решений и безупречного сервиса, при котором каждый пациент чувствует себя ценным.",
+      "*Семья врачей* с историей более 25 лет: с 1992 года, когда *д-р Ион Каракаш* и *д-р Елена Каракаш* открыли первую частную клинику, мы строим стоматологию, основанную на понимании, безопасности и высочайших стандартах.",
+    aboutMore: "Подробнее",
     team: "Наша команда:",
     teamTitle: "Наша команда",
     teamLead: "Опытные врачи, преданные каждой улыбке.",
@@ -466,19 +507,21 @@ export type CaracasHeroProps = {
 };
 
 export default function CaracasHero({
-  // scrubHeight is the hero's total scroll length (in vh). The whole landing + "Scopul nostru"
-  // choreography is mapped across it, so a LARGER value spreads every phase over more scroll —
-  // each gesture moves the animation less, which reads as slower + smoother (closer to the
-  // natural-flow feel of the Rezultate section the user liked). 300 → 420 for a gentler scrub,
-  // then 420 → 240 to cut the long DEAD scroll after the fuse (fuse finishes ~p0.19; this
-  // shortens the whole hero from 4.2 → 2.4 screens so the Echipa hand-off comes much sooner).
-  scrubHeight = 240,
+  // scrubHeight is the hero's total scroll length (in vh). 210 makes total = 110vh: 10vh of
+  // video-only scroll, then the panel rises 100vh over exactly 100vh of scroll — i.e. at 1×
+  // scroll speed. Because post-unpin scrolling is ALSO 1×, the panel's velocity is continuous
+  // through the release and the end-of-section BUMP disappears entirely.
+  scrubHeight = 210,
   marqueeTravel = 430,
   // white, matching the left panel — so the framed video card's surround reads as the same
   // sheet as the panel (no #f4f6f6 vs #fff seam around the card).
   panelColor = LIGHT,
 }: CaracasHeroProps) {
   const [lang, setLang] = useState<"ro" | "ru">("ro");
+  const [menuOpen, setMenuOpen] = useState(false);
+  // mirror for the scroll driver: while the menu sheet is open the header must render its
+  // "over dark" look (transparent bg, white ink) and stay shown, whatever the scroll state.
+  const menuOpenRef = useRef(false);
   const t = COPY[lang];
   const marqueeWords = t.marquee.split(" ");
   const marqueeLast = marqueeWords[marqueeWords.length - 1];
@@ -500,15 +543,21 @@ export default function CaracasHero({
   const marqueeLastRef = useRef<HTMLSpanElement>(null);
   const goalRef = useRef<HTMLDivElement>(null);
   const imgsRef = useRef<Array<HTMLDivElement | null>>([]);
+  // the inner copies of the CURRENT photo (one per strip), double-buffered: layer A
+  // and layer B alternate as front/incoming so the next photo can wipe in over the
+  // current one. Every copy gets the same per-frame translateY so the picture
+  // drifts behind the fixed slits (parallax) while the slices stay aligned.
+  const sliceImgsARef = useRef<Array<HTMLImageElement | null>>([]);
+  const sliceImgsBRef = useRef<Array<HTMLImageElement | null>>([]);
+  // latest scroll progress, published by update() for the slideshow timer (it only
+  // cycles once the section has actually risen into view).
+  const scrollPRef = useRef(0);
   const charsRef = useRef<Array<HTMLSpanElement | null>>([]);
   const chunkRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
   const collageAreaRef = useRef<HTMLDivElement>(null);
-  const collageRef = useRef<HTMLDivElement>(null);
-  const fusedRef = useRef<HTMLDivElement>(null);
-  // Echipa's Dr. 1 image element, forwarded down so the Scopul scroll driver can pin &
-  // grow it across the section hand-off, then release it as the carousel base (see the
-  // ECHIPA HAND-OFF block in update()).
+  // Echipa's Dr. 1 image element (kept for the prop interface; it's now simply the
+  // static carousel base — the old pin-and-grow hand-off was removed).
   const echDr1Ref = useRef<HTMLDivElement>(null);
   const imgShownRef = useRef<boolean[]>([]);
   const forceRevealRef = useRef(false);
@@ -517,15 +566,26 @@ export default function CaracasHero({
 
   // ── paragraph → per-word / per-character spans. The words keep whole on their
   //    line (nowrap) while every character darkens grey→ink in reading order as
-  //    the reveal sweep passes over it (mid-word reveal, like the reference). ──
+  //    the reveal sweep passes over it (mid-word reveal, like the reference).
+  //    Runs wrapped in *asterisks* render in the EDITORIAL ITALIC (the hero's accent
+  //    treatment — mosaicist-style mixed sans/serif body). ──
   const paragraphNodes = useMemo(() => {
     charsRef.current = [];
-    const words = String(t.paragraph).split(" ");
+    // tokenize into words carrying an italic flag: segments between * pairs are italic
+    const tokens: { word: string; italic: boolean }[] = [];
+    String(t.paragraph)
+      .split("*")
+      .forEach((seg, si) => {
+        const italic = si % 2 === 1;
+        seg.split(" ").forEach((w) => {
+          if (w.length) tokens.push({ word: w, italic });
+        });
+      });
     let idx = 0;
     const nodes: React.ReactNode[] = [];
-    words.forEach((word, wi) => {
+    tokens.forEach((tk, wi) => {
       const letters: React.ReactNode[] = [];
-      for (let i = 0; i < word.length; i++) {
+      for (let i = 0; i < tk.word.length; i++) {
         const at = idx++;
         letters.push(
           <span
@@ -535,16 +595,33 @@ export default function CaracasHero({
             }}
             style={{ display: "inline-block", opacity: 0.2, willChange: "opacity" }}
           >
-            {word[i]}
+            {tk.word[i]}
           </span>
         );
       }
       nodes.push(
-        <span key={`w${wi}`} style={{ whiteSpace: "nowrap" }}>
+        <span
+          key={`w${wi}`}
+          style={{
+            whiteSpace: "nowrap",
+            // slight size bump so the serif matches the sans optically (same trick as
+            // the hero's "noastră"), plus a hairline text-stroke to bring the single-weight
+            // (400) serif up to the visual weight of the surrounding Inter Tight 500
+            ...(tk.italic
+              ? {
+                  fontFamily: SERIF,
+                  fontStyle: "italic" as const,
+                  fontSize: "1.05em",
+                  WebkitTextStrokeWidth: "0.017em",
+                  WebkitTextStrokeColor: "currentcolor",
+                }
+              : null),
+          }}
+        >
           {letters}
         </span>
       );
-      if (wi < words.length - 1) {
+      if (wi < tokens.length - 1) {
         const at = idx++;
         nodes.push(
           <span
@@ -565,21 +642,11 @@ export default function CaracasHero({
   // ── scroll driver ─────────────────────────────────────────────────────────
   useEffect(() => {
     const cl = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
-    const ease = (t2: number) => (t2 < 0.5 ? 2 * t2 * t2 : 1 - Math.pow(-2 * t2 + 2, 2) / 2);
 
     // cached layout metrics — refreshed on resize only, never on scroll
     let total = 0;
     let rootTop = 0;
     let marqueeStopVw = -300; // where the marquee freezes: last word at the left edge
-    // fused-image start rect (collage area, viewport px) — the Scopul fuse's START, and the
-    // rect the Dr. 1 image grows FROM during the hand-off.
-    let morphStart = { left: 0, top: 0, width: 0, height: 0 };
-    // …and the rect it grows TO: the Echipa Dr. 1 container, MEASURED live (not a 50vw guess).
-    // Scopul's sticky is 100vw (incl. scrollbar) but Echipa uses the layout width; measuring
-    // the real container keeps the image the exact same size when it locks (no size pop).
-    let lockTarget = { w: 0, h: 0 };
-    let vw = 0;
-    let vh = 0;
     // scrollbar width (innerWidth includes it, but the visible viewport / clientWidth does not).
     // The video card's insets are in vw, so without this the RIGHT gap would be scrollbar-px
     // narrower than the LEFT gap. We add it back to the right inset to keep the gaps symmetric.
@@ -614,20 +681,20 @@ export default function CaracasHero({
         let fs = parseFloat(getComputedStyle(ch).fontSize);
         let h = ch.scrollHeight;
         if (fs > 0 && h > 0) {
-          const topPx = H * 0.13; // the chunk sits at top:13% — clears the fixed header
-          const fillH = H - topPx - H * 0.045; // fill down to a ~4.5% bottom margin
+          const topPx = H * 0.085; // the chunk starts right under the floating header
+          const fillH = H - topPx - H * 0.11; // fill nearly the whole column (button room below)
           fs = Math.min(240, Math.max(24, (fs * fillH) / h));
           ch.style.fontSize = fs + "px";
           h = ch.scrollHeight;
           let grow = 0;
-          while (topPx + h < H * 0.955 && fs < 240 && grow < 14) {
+          while (topPx + h < H * 0.89 && fs < 240 && grow < 14) {
             fs *= 1.035;
             ch.style.fontSize = fs + "px";
             h = ch.scrollHeight;
             grow++;
           }
           let guard = 0;
-          while (topPx + h > H * 0.97 && fs > 24 && guard < 14) {
+          while (topPx + h > H * 0.9 && fs > 24 && guard < 14) {
             fs *= 0.96;
             ch.style.fontSize = fs + "px";
             h = ch.scrollHeight;
@@ -653,7 +720,9 @@ export default function CaracasHero({
             continue;
           }
           const ot = el.offsetTop;
-          if (curTop === null || ot > curTop + 6) {
+          // tolerance 12px (was 6): the italic serif words sit in a slightly taller box at
+          // 1.05em, so same-row chars can differ by up to ~6-7px at the largest font sizes
+          if (curTop === null || ot > curTop + 12) {
             rowStartChar.push(i);
             rowTops.push(ot);
             curTop = ot;
@@ -665,23 +734,22 @@ export default function CaracasHero({
         for (let k = 0; k < numRows; k++) {
           rowLen[k] = ((k + 1 < numRows) ? rowStartChar[k + 1] : chs.length) - rowStartChar[k];
         }
-        // invert the rise easing (goalRise = ease((p-0.08)/0.30)) to find the p where a
-        // given rise-progress gp is reached.
-        const easeInv = (e: number) =>
-          e <= 0 ? 0 : e >= 1 ? 1 : e < 0.5 ? Math.sqrt(e / 2) : 1 - Math.sqrt(2 * (1 - e)) / 2;
+        // the rise is LINEAR (gp = (p-0.10)/0.75), so gp→p inverts directly.
         // one row height (px), to key off a row being FULLY in view (its bottom edge
         // entered) rather than just its top peeking at the very bottom.
         const rowH = numRows > 1 ? rowTops[1] - rowTops[0] : H * 0.12;
         pVis = [];
         for (let k = 0; k < numRows; k++) {
-          // chunk sits at top:11% of the panel(=viewport); a row's BOTTOM is at panel-y =
-          // 0.11*H + rowTops[k] + rowH; it clears the viewport bottom (row fully visible)
-          // when translateY = (1-gp)*H drops to H − that, i.e. gp = 0.11 + (rowTops[k]+rowH)/H.
-          const gpVis = 0.13 + (rowTops[k] + rowH) / H;
-          pVis[k] = 0.08 + easeInv(Math.min(1, gpVis)) * 0.3;
+          // chunk sits at top:8.5% of the panel(=viewport); a row's BOTTOM is at panel-y =
+          // 0.085*H + rowTops[k] + rowH; it clears the viewport bottom (row fully visible)
+          // when translateY = (1-gp)*H drops to H − that, i.e. gp = 0.085 + (rowTops[k]+rowH)/H.
+          const gpVis = 0.085 + (rowTops[k] + rowH) / H;
+          pVis[k] = 0.091 + Math.min(1, gpVis) * 0.909;
         }
         const lastWin = numRows > 1 ? pVis[numRows - 1] - pVis[numRows - 2] : 0.03;
-        pVisEnd = numRows > 0 ? pVis[numRows - 1] + Math.max(0.02, lastWin) : 0.22;
+        // clamp: the last row must FINISH revealing before the scrub ends (p=1), otherwise
+        // its final chars would freeze mid-reveal as the section scrolls away.
+        pVisEnd = Math.min(0.99, numRows > 0 ? pVis[numRows - 1] + Math.max(0.02, lastWin) : 0.22);
       }
 
       // position the image stack so the whitespace ABOVE it (below the "Scopul
@@ -697,17 +765,7 @@ export default function CaracasHero({
         const height = Math.max(0, H - outerGap - top);
         col.style.top = top + "px";
         col.style.height = height + "px";
-        // the collage area sits in the left column (left 4%, width 44% of the viewport);
-        // remember its viewport rect so the fused image can grow FROM here to the left half.
-        vw = window.innerWidth;
-        vh = window.innerHeight;
-        morphStart = { left: 0.04 * vw, top, width: 0.44 * vw, height };
       }
-
-      // measure the Echipa Dr. 1 container (the left-half slot) so the hand-off grows the
-      // image to its EXACT pinned size. offsetWidth/Height read fine even below the fold.
-      const lc = echDr1Ref.current?.parentElement;
-      lockTarget = lc ? { w: lc.offsetWidth, h: lc.offsetHeight } : { w: window.innerWidth * 0.5, h: window.innerHeight };
     };
 
     let revealState = "";
@@ -716,40 +774,25 @@ export default function CaracasHero({
     // couple dozen chars, not the whole ~230-char paragraph) — this avoids a
     // per-frame style-recalc storm across every span.
     let prevOpac: number[] = [];
-    let fusedPlayed = false;
-    let lastNavY = window.scrollY;
-    let navDir: "up" | "down" = "up";
 
     const update = () => {
       if (!rootRef.current) return;
       const y = window.scrollY;
       let p = total > 0 ? (y - rootTop) / total : 0;
       p = cl(p);
+      scrollPRef.current = p;
 
-      // 1. HEADER + VIDEO. The hero is now a full-screen video (no split panel, no marquee) with
-      //    the hero text/button overlaid; only the goal (Scopul) section still rises over it.
-      // header: transparent over the video (all-white ink) at the hero top, then a solid white
-      //    bar with dark ink once the light content has risen behind it. No fade.
-      if (navRef.current) {
-        // transparent the WHOLE time the video is behind the header (the whole first scroll,
-        // including while the bar slides up to hide) — only white once Scopul has covered it.
-        const overVideo = p < 0.36;
-        navRef.current.style.background = overVideo ? "transparent" : "#ffffff";
-        navRef.current.style.setProperty("--nav-fg", overVideo ? "rgb(255,255,255)" : "rgb(28,43,48)");
-        navRef.current.style.setProperty("--nav-fg-left", overVideo ? "rgba(255,255,255,0.92)" : "rgba(28,43,48,0.72)");
-        navRef.current.style.setProperty("--logo-filter", overVideo ? "brightness(0) invert(1)" : "none");
-        // Contact button: white pill over the video (all header elements white there); coral
-        // primary pill on the white bar.
-        navRef.current.style.setProperty("--btn-bg", overVideo ? "#ffffff" : ACCENT);
-        navRef.current.style.setProperty("--btn-fg", overVideo ? "rgb(28,43,48)" : "#ffffff");
-      }
-      // The video does NOT pan horizontally (removed). It only drifts UP as the Scopul section
-      // rises over it on an eased curve; the hero text drifts up too but SLOWER (0.45×) so it
-      // lags behind = depth. The reveal/rise window is widened to 0.30 so it plays over ~2× the
-      // scroll — the letter-by-letter reveal no longer races (and pushing the fuse later keeps
-      // the dead scroll before the hand-off small).
-      const goalRise = cl((p - 0.08) / 0.30); // rise/reveal p=0.08 → 0.38, then it PINS (gp=1)
-      const gp = ease(goalRise);
+      // 1. HEADER: fully static now — fixed in place, transparent, always-white elements over
+      //    a black gradient scrim (rendered in the JSX). No scroll-driven appearance changes,
+      //    no auto-hide. Nothing to drive per-frame.
+      // The video does NOT pan horizontally (removed). It only drifts UP as the section rises
+      // over it; the hero text drifts up too but SLOWER (0.7×) so it lags behind = depth.
+      // The rise is LINEAR and, crucially, moves at EXACTLY 1× scroll speed: with total=110vh,
+      // gp spans p 0.091 → 1.0, i.e. 100vh of panel travel over 100vh of scroll. The panel's
+      // velocity is therefore identical before and after the sticky releases (both 1×), so the
+      // hand-over to normal scrolling is seamless — no bump, no dead stop, no speed change.
+      const goalRise = cl((p - 0.091) / 0.909);
+      const gp = goalRise;
       const par = gp * 40;
       if (mediaWrapRef.current) {
         mediaWrapRef.current.style.transform = "translateY(-" + par.toFixed(2) + "vh)";
@@ -758,17 +801,6 @@ export default function CaracasHero({
       // 2. hero text overlay: drifts UP with the video (0.7× — a bit faster now) — NO fade (it's
       //    simply covered by the rising Scopul panel).
       if (videoUiRef.current) videoUiRef.current.style.transform = "translateY(-" + (par * 0.7).toFixed(2) + "vh)";
-
-      // 3. header auto-hide (everywhere): scroll down → slide up (hide); scroll up → slide back
-      //    down (show). Stays put near the very top so a tiny scroll doesn't flicker it.
-      const dy = y - lastNavY;
-      if (Math.abs(dy) > 3) {
-        navDir = dy > 0 ? "down" : "up";
-        lastNavY = y;
-      }
-      if (navRef.current)
-        navRef.current.style.transform =
-          navDir === "down" && y > 80 ? "translateY(-135%)" : "translateY(0)";
 
       // 5. the WHOLE goal section (title + collage + chunk) rises up from the bottom
       //    the instant the marquee stops, locked to the video parallax. Once fully
@@ -831,14 +863,16 @@ export default function CaracasHero({
         }
       }
 
-      // collage: each image POPS in (2s zoom 1.2→1.0) as its cue passes while the
-      // section rises, stacking over the ones before it — a time-based pop
+      // 7. collage: each image POPS in (2s zoom 1.2→1.0) as its cue passes while the
+      //    section rises, stacking over the ones before it — a time-based pop.
+      //    (The 4→1 FUSE and the pin-and-grow hand-off into Echipa were both removed —
+      //    the collage stays 4 images, and Echipa owns its own static Dr. 1 base.)
       const imgs = imgsRef.current;
       const shown = imgShownRef.current;
       for (let k = 0; k < imgs.length; k++) {
         const el = imgs[k];
         if (!el) continue;
-        const trig = 0.1 + k * 0.02;
+        const trig = 0.14 + k * 0.05; // spread over the (shorter) scrub so they still pop one-by-one
         if (p >= trig) {
           if (!shown[k]) {
             shown[k] = true;
@@ -854,68 +888,16 @@ export default function CaracasHero({
         }
       }
 
-      // 7. FUSE: after the reveal lands, the 4 blocks fuse into ONE image via a
-      //    top→bottom FILL wipe. It's TIME-based: the instant the scroll passes the
-      //    trigger, the single image reveals itself downward over the stack (~0.9s CSS
-      //    transition on clip-path), it is NOT scrubbed frame-by-frame. Scrolling back
-      //    above the trigger resets it so it can play again.
-      // the fill fires right after the chunk reveal finishes (pVisEnd), and the grow
-      // follows it — both keyed off the reveal end so they track the text, not fixed p.
-      const fuseAt = pVisEnd + 0.03;
-      const f = fusedRef.current;
-      if (f) {
-        // SYMMETRIC: fuse when crossing fuseAt scrolling down, and un-fuse at the exact
-        // same point scrolling back up. The state guard only writes on a real crossing,
-        // so the CSS clip transition plays cleanly each way (Lenis scroll is smooth, so
-        // there's no jitter to restart it mid-fill).
-        const shouldFuse = p >= fuseAt;
-        if (shouldFuse !== fusedPlayed) {
-          fusedPlayed = shouldFuse;
-          f.style.clipPath = shouldFuse ? "inset(0 0 0 0)" : "inset(0 0 100% 0)";
-        }
+      // 8. sliced-photo parallax: all 4 strips show the SAME image, and every copy
+      //    (both slideshow buffers) gets the SAME translateY each frame — so the
+      //    slices always stay aligned with each other while the picture drifts
+      //    slowly behind the fixed gaps (±36px over the rise = depth behind slits).
+      const slicePar = "translateY(" + ((gp - 0.5) * 72).toFixed(2) + "px)";
+      for (const im of sliceImgsARef.current) {
+        if (im) im.style.transform = slicePar;
       }
-
-      // 8. ECHIPA HAND-OFF — PIN & RELEASE: Echipa is its OWN section right below this one.
-      //    Its Dr. 1 image (echDr1Ref) is handed off from the Scopul collage: it's pinned to
-      //    the viewport (position:fixed) and grown from the collage rect to the Echipa left-half
-      //    over a scroll window ending exactly at Echipa's top, then RELEASED to absolute so
-      //    Echipa's own carousel wipes Dr. 2/3 over it. One element throughout, no fade.
-      const el = echDr1Ref.current;
-      if (el) {
-        const lockY = rootTop + total + window.innerHeight; // Echipa's top (this container's bottom)
-        // Travel MUST be ≥ 1·vh: Scopul's sticky releases at lockY − vh, so the morph has to
-        // begin while Scopul is still pinned (fused image on screen) and stay pinned across the
-        // unpin — otherwise the fused image scrolls away before the doctor image grows in.
-        // start the morph earlier (1.6vh window, was 1.1) so the fused image begins traveling to
-        // Echipa soon after it fuses — turning what was dead scroll into the hand-off animation.
-        const spanStartY = lockY - window.innerHeight * 1.6;
-        if (y < spanStartY) {
-          // pre-hand-off: Scopul still owns the fused image; keep Dr. 1 hidden in its base slot
-          el.style.position = "absolute";
-          el.style.opacity = "0";
-          if (collageAreaRef.current) collageAreaRef.current.style.opacity = "1";
-        } else if (y < lockY) {
-          // TRAVEL: pin to the viewport and grow collage-rect → measured left-half slot
-          const g = ease(cl((y - spanStartY) / (lockY - spanStartY)));
-          el.style.position = "fixed";
-          el.style.zIndex = "15";
-          el.style.opacity = "1";
-          el.style.left = (morphStart.left * (1 - g)).toFixed(2) + "px";
-          el.style.top = (morphStart.top * (1 - g)).toFixed(2) + "px";
-          el.style.width = (morphStart.width + (lockTarget.w - morphStart.width) * g).toFixed(2) + "px";
-          el.style.height = (morphStart.height + (lockTarget.h - morphStart.height) * g).toFixed(2) + "px";
-          if (collageAreaRef.current) collageAreaRef.current.style.opacity = "0"; // avoid two images
-        } else {
-          // RELEASE: back to natural flow, fills the Echipa left-half as the carousel base
-          el.style.position = "absolute";
-          el.style.zIndex = "1";
-          el.style.opacity = "1";
-          el.style.left = "0px";
-          el.style.top = "0px";
-          el.style.width = "100%";
-          el.style.height = "100%";
-          if (collageAreaRef.current) collageAreaRef.current.style.opacity = "0";
-        }
+      for (const im of sliceImgsBRef.current) {
+        if (im) im.style.transform = slicePar;
       }
     };
     updateRef.current = update;
@@ -959,6 +941,76 @@ export default function CaracasHero({
     };
   }, [marqueeTravel, panelColor]);
 
+  // ── "Cine suntem?" slideshow: rotate the sliced photo through CINE_IMAGES.
+  //    Because every strip's img spans the SAME composite space (full collage +
+  //    headroom), one synchronized clip-path wipe on the 4 incoming copies reads
+  //    as a single scan line travelling DOWN the whole picture — revealing strip 1,
+  //    crossing the gap, then strip 2, 3, 4, one layer at a time.
+  //    Double-buffered (A/B alternate front/incoming) + preloaded: the incoming
+  //    buffer's src is set and decode()d BEFORE the wipe starts, and the image
+  //    after next is warmed into the HTTP cache during the hold.
+  useEffect(() => {
+    const WIPE = 700; // scan-line sweep duration (ms)
+    const HOLD = 1500; // rest between wipes (ms) — "changes every 1.5s"
+    let front: "A" | "B" = "A";
+    let idx = 0;
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const preloaded = new Set<string>([CINE_IMAGES[0], CINE_IMAGES[1]]);
+    const preload = (src: string) => {
+      if (preloaded.has(src)) return;
+      preloaded.add(src);
+      const im = new window.Image();
+      im.src = src;
+    };
+    const schedule = (ms: number) => {
+      timer = setTimeout(tick, ms);
+    };
+    const tick = () => {
+      if (stopped) return;
+      // don't burn cycles (or surprise the user) before the section has risen in,
+      // or while the tab is hidden — check again shortly instead.
+      if (document.hidden || scrollPRef.current < 0.14) {
+        schedule(400);
+        return;
+      }
+      const incoming = (front === "A" ? sliceImgsBRef : sliceImgsARef).current.filter(Boolean) as HTMLImageElement[];
+      const outgoing = (front === "A" ? sliceImgsARef : sliceImgsBRef).current.filter(Boolean) as HTMLImageElement[];
+      if (incoming.length < 4 || outgoing.length < 4) {
+        schedule(400);
+        return;
+      }
+      const nextIdx = (idx + 1) % CINE_IMAGES.length;
+      const nextSrc = CINE_IMAGES[nextIdx];
+      for (const im of incoming) {
+        im.style.transition = "none";
+        im.style.clipPath = "inset(0 0 100% 0)"; // fully hidden; will reveal top→bottom
+        im.style.zIndex = "2";
+        if (im.src !== nextSrc) im.src = nextSrc;
+      }
+      for (const im of outgoing) im.style.zIndex = "1";
+      // decode() = the preload guarantee: the wipe only starts once every copy of
+      // the next photo is ready to paint, so the scan line never reveals a blank.
+      Promise.all(incoming.map((im) => (im.decode ? im.decode().catch(() => {}) : Promise.resolve()))).then(() => {
+        if (stopped) return;
+        void incoming[0].offsetWidth; // commit the hidden clip before transitioning
+        for (const im of incoming) {
+          im.style.transition = `clip-path ${WIPE}ms cubic-bezier(0.45,0,0.2,1)`;
+          im.style.clipPath = "inset(0 0 0% 0)";
+        }
+        idx = nextIdx;
+        front = front === "A" ? "B" : "A";
+        preload(CINE_IMAGES[(nextIdx + 1) % CINE_IMAGES.length]); // warm the one after
+        schedule(WIPE + HOLD);
+      });
+    };
+    schedule(HOLD + 600); // first rotation a beat after the pops settle
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+    };
+  }, []);
+
   // re-apply scroll-driven styles after a language change re-renders the DOM
   useEffect(() => {
     imgShownRef.current = []; // re-arm the collage pops for the re-rendered nodes
@@ -983,10 +1035,32 @@ export default function CaracasHero({
     }
   };
 
+  // menu-overlay navigation: close the sheet, then scroll to the target (a section
+  // selector, the very top, or the footer/contact at the bottom of the document).
+  const menuNav = (target: string) => {
+    setMenuOpen(false);
+    if (target === "top") goTo(0);
+    else if (target === "footer") goTo(document.documentElement.scrollHeight);
+    else goTo(target);
+  };
+
+  // freeze the (Lenis) page scroll while the menu overlay is open, and re-run the scroll
+  // driver so the header immediately flips to / from its over-dark (transparent) look.
+  useEffect(() => {
+    menuOpenRef.current = menuOpen;
+    updateRef.current();
+    if (!lenis) return;
+    if (menuOpen) lenis.stop();
+    else lenis.start();
+    return () => lenis.start();
+  }, [menuOpen, lenis]);
+
   return (
     <>
     {/* ── nav — rendered at the TOP LEVEL (not inside the sticky) so it's in the root stacking
-        context and stays above every section. Fixed, full-width auto-hiding bar. ── */}
+        context and stays above every section. STATIC: fixed in place (no auto-hide), no
+        background bar — the elements are always white and sit on a black gradient SCRIM
+        (the child div below) so they stay readable over any section, light or dark. ── */}
     <div
       ref={navRef}
       style={{
@@ -1001,30 +1075,54 @@ export default function CaracasHero({
         padding: "12px 44px",
         boxSizing: "border-box",
         background: "transparent",
-        transform: "translateY(0)",
-        transition: "transform 0.45s cubic-bezier(0.4,0,0.2,1)",
-        willChange: "transform",
       }}
     >
+      {/* readability scrim — black fade painted UNDER the header elements (zIndex:-1 keeps it
+          behind them but still above the page, since the nav is its own stacking context) */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: 0,
+          height: "170px",
+          background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.26) 45%, rgba(0,0,0,0) 100%)",
+          pointerEvents: "none",
+          zIndex: -1,
+        }}
+      />
       <div style={{ display: "flex", alignItems: "center", gap: "30px" }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- brand logo SVG */}
         <img
           src="/caracas-logo.svg"
           alt="Caracaș Dental"
-          onClick={() => goTo(0)}
-          style={{ height: "34px", width: "auto", display: "block", cursor: "pointer", filter: "var(--logo-filter, none)", transition: "filter 0.3s ease" }}
+          onClick={() => {
+            setMenuOpen(false);
+            goTo(0);
+          }}
+          style={{ height: "34px", width: "auto", display: "block", cursor: "pointer", filter: "brightness(0) invert(1)" }}
         />
-        <div
-          onClick={() => goTo("#servicii")}
-          style={{ ...navRowText, gap: "10px", cursor: "pointer", fontSize: "11px", fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--nav-fg-left, rgba(28,43,48,0.72))", transition: "color 0.3s ease" }}
+        {/* the SAME button opens and closes the sheet — the header never changes, only the
+            icon flips ☰ ↔ ✕ (reference behaviour: the page slides under the static header) */}
+        <button
+          onClick={() => setMenuOpen((o) => !o)}
+          aria-label={t.nav.menu}
+          aria-expanded={menuOpen}
+          style={{ ...navRowText, appearance: "none", border: 0, background: "transparent", padding: 0, gap: "10px", cursor: "pointer", fontFamily: FONT, fontSize: "11px", fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.92)" }}
         >
           {t.nav.menu}
-          <svg width="17" height="11" viewBox="0 0 18 12" fill="none">
-            <path d="M1 3.5h16M1 8.5h16" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-          </svg>
-        </div>
+          {menuOpen ? (
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <svg width="17" height="11" viewBox="0 0 18 12" fill="none">
+              <path d="M1 3.5h16M1 8.5h16" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+            </svg>
+          )}
+        </button>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "26px", color: "var(--nav-fg, #1c2b30)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "26px", color: "#ffffff" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           {(["ro", "ru"] as const).map((l) => (
             <button
@@ -1037,8 +1135,8 @@ export default function CaracasHero({
                 cursor: "pointer",
                 fontFamily: FONT,
                 fontSize: "11px",
-                fontWeight: 600,
-                letterSpacing: "0.12em",
+                fontWeight: 500,
+                letterSpacing: "0.08em",
                 padding: "3px 0",
                 color: "currentColor",
                 opacity: lang === l ? 1 : 0.4,
@@ -1050,40 +1148,181 @@ export default function CaracasHero({
             </button>
           ))}
         </div>
+        {/* Contact — EXACTLY the hero CTA design: solid #dad3d1 rectangle (3px), dark text,
+            plain ↗ arrow. Static colors in every header state (no --btn-bg/--btn-fg vars). */}
         <button
-          onClick={() => goTo(document.documentElement.scrollHeight)}
+          onClick={() => {
+            setMenuOpen(false);
+            goTo(document.documentElement.scrollHeight);
+          }}
           style={{
             appearance: "none",
             border: 0,
             cursor: "pointer",
-            display: "flex",
+            display: "inline-flex",
             alignItems: "center",
             gap: "12px",
-            background: "var(--btn-bg, #eb7180)",
-            color: "var(--btn-fg, #ffffff)",
-            borderRadius: "999px",
-            padding: "8px 8px 8px 22px",
+            background: "#dad3d1",
+            color: "#161516",
+            borderRadius: "3px",
+            padding: "11px 20px",
             marginLeft: "2px",
+            fontFamily: FONT,
+            fontSize: "1.04vw",
+            fontWeight: 400,
+            letterSpacing: "-0.03em",
+            whiteSpace: "nowrap",
           }}
         >
-          <span style={{ fontFamily: FONT, fontSize: "12.5px", fontWeight: 600, letterSpacing: "0.03em" }}>{t.nav.contact}</span>
-          <span
-            style={{
-              width: "30px",
-              height: "30px",
-              borderRadius: "999px",
-              border: "1.5px solid currentColor",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flex: "none",
-            }}
-          >
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-              <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
+          {t.nav.contact}
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ flex: "none" }}>
+            <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="#161516" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
+      </div>
+    </div>
+
+    {/* ── EXPANDED MENU — full-screen dark sheet in the Aventura Dental Arts pattern: it slides
+        DOWN from the top UNDER the fixed header (zIndex below the nav's 100 — the header itself
+        never changes, only the page goes under it; the nav just flips to its over-dark look and
+        its Meniu button becomes the ✕). Content is already laid out (no per-item stagger) and
+        rides in on an ease-out curve (fast start, slowing to a stop). Left rail = socials +
+        small arrowed utility rows; right zone = "Servicii:" with 4 B&W image cards, then the
+        big editorial-serif links in a 2-column grid. Page scroll frozen while open. ── */}
+    <div
+      aria-hidden={!menuOpen}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 90,
+        background: "linear-gradient(158deg,#161d21 0%,#0d1114 58%,#0a0d10 100%)",
+        color: "#eef1f2",
+        transform: menuOpen ? "translateY(0)" : "translateY(-100%)",
+        pointerEvents: menuOpen ? "auto" : "none",
+        transition: "transform 0.9s cubic-bezier(0.16,1,0.3,1)",
+        willChange: "transform",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      {/* ── main area: LEFT rail (socials + arrowed utility rows, pinned to the bottom)
+             | RIGHT zone ("Servicii:" + 4 B&W cards on top, big serif links below).
+             Top padding clears the fixed header floating above the sheet. ── */}
+      <div style={{ flex: 1, minHeight: 0, display: "flex", gap: "clamp(24px,4vw,80px)", padding: "clamp(64px,10vh,96px) 44px clamp(20px,4vh,44px)" }}>
+        {/* LEFT rail */}
+        <div style={{ flex: "0 0 clamp(200px,23vw,340px)", display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: "clamp(22px,4.5vh,48px)" }}>
+          {/* socials — faint circles (wire real profile URLs later) */}
+          <div style={{ display: "flex", gap: "14px" }}>
+            <button aria-label="Instagram" style={{ appearance: "none", border: 0, cursor: "pointer", width: "54px", height: "54px", borderRadius: "999px", background: "rgba(238,241,242,0.08)", display: "flex", alignItems: "center", justifyContent: "center", color: "#eef1f2" }}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.6" />
+                <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.6" />
+                <circle cx="17.2" cy="6.8" r="1.15" fill="currentColor" />
+              </svg>
+            </button>
+            <button aria-label="Facebook" style={{ appearance: "none", border: 0, cursor: "pointer", width: "54px", height: "54px", borderRadius: "999px", background: "rgba(238,241,242,0.08)", display: "flex", alignItems: "center", justifyContent: "center", color: "#eef1f2" }}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <path d="M14.5 8.5V6.8c0-.9.6-1.3 1.4-1.3h1.6V2.6h-2.6c-2.6 0-3.9 1.7-3.9 4v1.9H8.5V12h2.5v9.4h3.5V12h2.6l.4-3.5h-3Z" fill="currentColor" />
+              </svg>
+            </button>
+          </div>
+          {/* small utility rows, hairline-divided, with ↗ arrows */}
+          <div>
+            {t.menuUtility.map((u, i) => (
+              <button
+                key={i}
+                className="cd-menu-util"
+                onClick={() => menuNav(u.target)}
+                style={{
+                  appearance: "none",
+                  border: 0,
+                  background: "transparent",
+                  cursor: "pointer",
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "16px",
+                  padding: "clamp(14px,2.6vh,22px) 0",
+                  borderTop: "1px solid rgba(238,241,242,0.16)",
+                  borderBottom: i === t.menuUtility.length - 1 ? "1px solid rgba(238,241,242,0.16)" : undefined,
+                  fontFamily: FONT,
+                  fontSize: "clamp(13px,1vw,16px)",
+                  fontWeight: 400,
+                  letterSpacing: "-0.01em",
+                  color: "#eef1f2",
+                  textAlign: "left",
+                }}
+              >
+                {u.label}
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flex: "none" }}>
+                  <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* RIGHT zone */}
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "clamp(16px,3vh,34px)" }}>
+          {/* "Servicii:" + the 4 service cards (B&W, colorize + zoom on hover) */}
+          <div>
+            <div
+              className="cd-menu-big"
+              onClick={() => menuNav("#servicii")}
+              style={{ fontFamily: serifFont, fontWeight: 400, fontSize: "clamp(34px,4.4vw,70px)", lineHeight: 1, letterSpacing: "-0.01em", cursor: "pointer", display: "inline-block" }}
+            >
+              {t.nav.services}:
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "clamp(12px,1.4vw,24px)", marginTop: "clamp(14px,3vh,30px)" }}>
+              {t.services.steps.map((s, i) => (
+                <button
+                  key={i}
+                  className="cd-menu-card"
+                  onClick={() => menuNav("#servicii")}
+                  style={{ appearance: "none", border: 0, background: "transparent", padding: 0, cursor: "pointer", textAlign: "left", minWidth: 0 }}
+                >
+                  <div style={{ width: "100%", height: "clamp(110px,26vh,250px)", overflow: "hidden", background: "#1b2126" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- menu mock-up card */}
+                    <img src={MENU_SERVICE_IMAGES[i]} alt={s.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: "grayscale(1)" }} />
+                  </div>
+                  <div style={{ fontFamily: FONT, fontSize: "clamp(13px,1.05vw,17px)", fontWeight: 400, letterSpacing: "-0.01em", color: "#eef1f2", marginTop: "10px" }}>
+                    {s.name}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* big editorial links, 2-column grid (reference "About Us / Laboratory / …") */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: "clamp(30px,4vw,90px)", rowGap: "clamp(2px,1vh,12px)" }}>
+            {t.menuLinks.map((lnk) => (
+              <button
+                key={lnk.target}
+                className="cd-menu-big"
+                onClick={() => menuNav(lnk.target)}
+                style={{
+                  appearance: "none",
+                  border: 0,
+                  background: "transparent",
+                  padding: 0,
+                  cursor: "pointer",
+                  textAlign: "left",
+                  fontFamily: serifFont,
+                  fontWeight: 400,
+                  fontSize: "clamp(36px,4.9vw,80px)",
+                  lineHeight: 1.02,
+                  letterSpacing: "-0.01em",
+                  color: "#eef1f2",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {lnk.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1137,18 +1376,7 @@ export default function CaracasHero({
               zIndex: 2,
             }}
           />
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              top: 0,
-              height: "26%",
-              background: "linear-gradient(to bottom, rgba(0,0,0,0.28), rgba(0,0,0,0))",
-              pointerEvents: "none",
-              zIndex: 3,
-            }}
-          />
+          {/* (the old top gradient was removed — the global header scrim covers that zone) */}
           <div
             ref={scrimRef}
             style={{
@@ -1165,8 +1393,11 @@ export default function CaracasHero({
           />
         </div>
 
-        {/* ── hero text + button, overlaid on the full-screen video (drifts up slower than the
-            video on scroll, no fade) ── */}
+        {/* ── hero content, overlaid on the full-screen video — matched to the mosaicist
+            reference: a tight full-bleed hairline sitting ABOVE (never over) a giant bottom-left
+            headline (Inter Tight 500, accent word in the editorial serif at the SAME size+weight),
+            with a small description over a solid light CTA bottom-right. All in warm #dad3d1.
+            The group drifts up slower than the video on scroll (no fade). ── */}
         <div
           ref={videoUiRef}
           style={{
@@ -1176,46 +1407,100 @@ export default function CaracasHero({
             display: "flex",
             flexDirection: "column",
             justifyContent: "flex-end",
-            alignItems: "flex-start",
-            padding: "0 clamp(24px,6vw,92px) clamp(46px,9vh,96px)",
             pointerEvents: "none",
             willChange: "transform",
           }}
         >
-          <h1
-            style={{
-              margin: 0,
-              fontFamily: serifFont,
-              fontWeight: 400,
-              fontSize: "clamp(44px, 6.4vw, 112px)",
-              lineHeight: 1.02,
-              letterSpacing: "-0.015em",
-              color: LIGHT,
-              maxWidth: "16ch",
-              textShadow: "0 2px 34px rgba(0,0,0,0.45)",
-            }}
-          >
-            {t.hero.l1}
-            <br />
-            {t.hero.l2} <span style={{ fontStyle: "italic" }}>{t.hero.accent}</span>
-          </h1>
-          <p
-            style={{
-              margin: "22px 0 0",
-              maxWidth: "48ch",
-              fontFamily: FONT,
-              fontSize: "clamp(15px, 1.15vw, 18px)",
-              fontWeight: 500,
-              lineHeight: 1.6,
-              color: "#ffffff",
-              textShadow: "0 1px 18px rgba(0,0,0,0.55)",
-            }}
-          >
-            {t.hero.sub}
-          </p>
-        </div>
+          {/* tight full-bleed hairline — its own flow row ABOVE the headline, so it can never
+              overlap the text (the earlier absolute line cut through the letters). */}
+          <div style={{ width: "100%", height: "1px", background: "rgba(218,211,209,0.42)", marginBottom: "clamp(30px,5.5vh,66px)" }} />
 
-        {/* video-side stat cards removed at user's request; the video card is kept clean. */}
+          {/* bottom row: giant headline (left) ⇄ description-over-CTA (right). The right column
+              STRETCHES to the headline height so the sub sits at its TOP and the CTA at its
+              BOTTOM — the reference composition. */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "stretch",
+              justifyContent: "space-between",
+              gap: "clamp(24px,5vw,90px)",
+              padding: "0 clamp(22px,2.6vw,44px) clamp(26px,4.5vh,44px)",
+            }}
+          >
+            <h1
+              style={{
+                margin: 0,
+                fontFamily: FONT,
+                fontWeight: 500,
+                fontSize: "7.81vw",
+                lineHeight: "95%",
+                letterSpacing: "-0.03em",
+                color: "#dad3d1",
+              }}
+            >
+              {t.hero.l1}
+              <br />
+              {t.hero.l2}{" "}
+              {/* SAME weight as the sans line; family = editorial serif. The serif is optically
+                  smaller than Inter Tight at an equal font-size, so it's scaled up ~13% to match
+                  the visual size of "Misiunea". (With the real PP Editorial New — which matches
+                  Inter Tight's optical size — this multiplier can drop back toward 1em.) */}
+              <span style={{ fontFamily: serifFont, fontStyle: "italic", fontWeight: 500, fontSize: "1.08em", lineHeight: "0.8" }}>{t.hero.accent}</span>
+            </h1>
+
+            <div
+              style={{
+                flex: "none",
+                maxWidth: "27ch",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                gap: "clamp(18px,3vh,34px)",
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: FONT,
+                  fontSize: "1.04vw",
+                  fontWeight: 300,
+                  lineHeight: "130%",
+                  letterSpacing: "-0.03em",
+                  color: "#dad3d1",
+                }}
+              >
+                {t.hero.sub}
+              </p>
+              <button
+                onClick={() => goTo(document.documentElement.scrollHeight)}
+                style={{
+                  pointerEvents: "auto",
+                  appearance: "none",
+                  border: 0,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  background: "#dad3d1",
+                  color: "#161516",
+                  borderRadius: "3px",
+                  padding: "11px 20px",
+                  fontFamily: FONT,
+                  fontSize: "1.04vw",
+                  fontWeight: 400,
+                  letterSpacing: "-0.03em",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {t.book}
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ flex: "none" }}>
+                  <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="#161516" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
 
         {/* nav lives at the TOP LEVEL of the fragment (below), NOT here — inside this
             position:sticky container it would be trapped in the sticky's stacking context and
@@ -1239,102 +1524,144 @@ export default function CaracasHero({
           <div style={{ position: "relative", width: "100%", height: "100%" }}>
             {/* ── LEFT HALF: big "Scopul nostru" + a mixed-orientation collage ── */}
             <div style={{ position: "absolute", left: "4%", top: 0, width: "44%", height: "100%" }}>
+              {/* heading in the HERO's type system: Inter Tight 500 with the last word in
+                  editorial italic — "Cine *suntem?*", echoing "Misiunea *noastră*" */}
               <div
                 ref={headingRef}
                 style={{
                   position: "absolute",
                   left: 0,
-                  top: "13%",
-                  fontFamily: serifFont,
-                  fontWeight: 400,
+                  top: "8.5%",
+                  fontFamily: FONT,
+                  fontWeight: 500,
                   fontSize: "clamp(40px, 5.3vw, 104px)",
                   lineHeight: 0.98,
-                  letterSpacing: "-0.02em",
+                  letterSpacing: "-0.03em",
                   color: INK,
                 }}
               >
-                {t.goalTitle}
+                {t.goalTitle.split(" ")[0]}{" "}
+                <span style={{ fontFamily: serifFont, fontStyle: "italic", fontWeight: 500, fontSize: "1.08em", lineHeight: 0.8, WebkitTextStrokeWidth: "0.017em", WebkitTextStrokeColor: "currentcolor" }}>
+                  {t.goalTitle.split(" ").slice(1).join(" ")}
+                </span>
               </div>
-              {/* Image area (position/height auto-balanced in measure). Holds two
-                  cross-fading layers: the 4-block stack, and the single fused image. */}
+              {/* Image area (position/height auto-balanced in measure): ONE tall photo
+                  sliced into 4 equal strips. Each strip clips its quarter of the SAME
+                  image (offset by -k·(strip+gap)), so together they reconstruct the
+                  full picture with the 12px gaps reading as cuts through it. Each strip
+                  still POPS in top→bottom; the shared photo parallaxes behind the gaps.
+                  Two stacked copies per strip (A/B) double-buffer the slideshow: the
+                  incoming photo scan-line-wipes over the current one (driver above).
+                  Geometry: img height = 4 strips (400%) + 3 gaps (36px) + 72px parallax
+                  headroom; base top centres that ±36px overscan. */}
               <div
                 ref={collageAreaRef}
                 style={{ position: "absolute", left: 0, top: "24%", width: "100%", height: "72%" }}
               >
-                {/* 4 equal HORIZONTAL (landscape) blocks stacked vertically, even gaps.
-                    Each pops in top→bottom, one-by-one, as you scroll. */}
-                <div
-                  ref={collageRef}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "12px",
-                    willChange: "opacity",
-                  }}
-                >
-                  {[0, 1, 2, 3].map((k) => (
-                    <div
-                      key={k}
-                      ref={(el) => {
-                        imgsRef.current[k] = el;
-                      }}
-                      style={{
-                        flex: "1 1 0",
-                        width: "100%",
-                        overflow: "hidden",
-                        background: "#dbe3e3",
-                        opacity: 0,
-                        transform: "scale(1.2)",
-                        pointerEvents: "none",
-                        willChange: "transform, opacity",
-                      }}
-                    >
-                      <ImageSlot bg="#dbe3e3" src={CLINIC_IMAGES[k]} label={t.collage(k + 1)} />
-                    </div>
-                  ))}
-                </div>
-                {/* the single fused image — revealed by a top→bottom FILL wipe over the
-                    stack (clip-path animates on a timer when scroll reaches the trigger).
-                    It is Dr. 1's photo, so it can grow straight into the Echipa section. */}
-                <div
-                  ref={fusedRef}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    overflow: "hidden",
-                    background: "#dbe3e3",
-                    clipPath: "inset(0 0 100% 0)",
-                    transition: "clip-path 0.9s cubic-bezier(0.7,0,0.25,1)",
-                    pointerEvents: "none",
-                    willChange: "clip-path",
-                  }}
-                >
-                  <ImageSlot bg="#dbe3e3" src={DOCTOR_PHOTOS[0]} label={t.doctors[0].name.join(" ")} />
+                <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {[0, 1, 2, 3].map((k) => {
+                    const sliceStyle: CSSProperties = {
+                      position: "absolute",
+                      left: 0,
+                      top: `calc(${-k * 100}% - ${k * 12 + 36}px)`,
+                      width: "100%",
+                      height: "calc(400% + 108px)",
+                      objectFit: "cover",
+                      display: "block",
+                      willChange: "transform",
+                    };
+                    return (
+                      <div
+                        key={k}
+                        ref={(el) => {
+                          imgsRef.current[k] = el;
+                        }}
+                        style={{
+                          position: "relative",
+                          flex: "1 1 0",
+                          width: "100%",
+                          overflow: "hidden",
+                          background: "#dbe3e3",
+                          opacity: 0,
+                          transform: "scale(1.2)",
+                          pointerEvents: "none",
+                          willChange: "transform, opacity",
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element -- slice of a full-bleed art layer, sized by the strip */}
+                        <img
+                          ref={(el) => {
+                            sliceImgsARef.current[k] = el;
+                          }}
+                          src={CINE_IMAGES[0]}
+                          alt={k === 0 ? t.collage(1) : ""}
+                          style={{ ...sliceStyle, zIndex: 1 }}
+                        />
+                        {/* eslint-disable-next-line @next/next/no-img-element -- slideshow back-buffer (also preloads image #2) */}
+                        <img
+                          ref={(el) => {
+                            sliceImgsBRef.current[k] = el;
+                          }}
+                          src={CINE_IMAGES[1]}
+                          alt=""
+                          style={{ ...sliceStyle, zIndex: 2, clipPath: "inset(0 0 100% 0)" }}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
 
             {/* ── RIGHT HALF: the big chunk fills the column; reveals in reading order ── */}
-            <div style={{ position: "absolute", left: "51%", top: 0, width: "47%", height: "100%" }}>
+            <div style={{ position: "absolute", left: "49.5%", top: 0, width: "48.5%", height: "100%" }}>
+              {/* the chunk in the hero's sans: Inter Tight 500, tight -0.03em, airier rows */}
               <div
                 ref={chunkRef}
                 style={{
                   position: "absolute",
                   left: 0,
-                  top: "13%",
+                  top: "8.5%",
                   width: "100%",
-                  fontFamily: serifFont,
-                  fontWeight: 400,
+                  fontFamily: FONT,
+                  fontWeight: 500,
                   fontSize: "clamp(40px, 5.3vw, 104px)",
-                  lineHeight: 1.06,
-                  letterSpacing: "-0.02em",
+                  lineHeight: 1.14,
+                  letterSpacing: "-0.03em",
                   color: INK,
                 }}
               >
                 {paragraphNodes}
               </div>
+              {/* "Mai multe" — placeholder for the full company story (hero-CTA geometry,
+                  coral fill so it reads on the white panel). */}
+              <button
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  bottom: "2.5%",
+                  appearance: "none",
+                  border: 0,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  background: ACCENT,
+                  color: "#ffffff",
+                  borderRadius: "3px",
+                  padding: "11px 20px",
+                  fontFamily: FONT,
+                  fontSize: "1.04vw",
+                  fontWeight: 400,
+                  letterSpacing: "-0.03em",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {t.aboutMore}
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ flex: "none" }}>
+                  <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -1349,6 +1676,7 @@ export default function CaracasHero({
 
     {/* ── REZULTATE / portfolio — tall image + two split columns, block mirrored ── */}
     <section
+      id="rezultate"
       style={{
         background: BG,
         padding: "clamp(70px,9vh,140px) 5% clamp(90px,12vh,150px)",

@@ -18,7 +18,7 @@ const BG = "#ffffff";
 const GRAD = "#f4f6f6";
 const ACCENT = "#fe7183"; // coral accent
 const INK = "#1c2b30";
-const FONT = "var(--font-nunito), 'Nunito', system-ui, sans-serif";
+const FONT = "var(--sans)";
 const IMG_BG = "#dbe3e3";
 
 // Mockup photography per service (Unsplash CDN, hotlinked) — one image for each of the

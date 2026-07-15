@@ -10,7 +10,7 @@ import { useEffect, useRef } from "react";
 
 const FOOT_BG = "#eb7180"; // brand coral — footer background
 const LIGHT = "#ffffff"; // white content on the coral footer
-const FONT = "var(--font-nunito), 'Nunito', system-ui, sans-serif";
+const FONT = "var(--sans)";
 
 type FooterCopy = {
   heading: string;

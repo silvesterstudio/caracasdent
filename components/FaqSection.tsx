@@ -14,7 +14,7 @@ import { useState } from "react";
 
 const INK = "#1c2b30";
 const ACCENT = "#eb7180"; // the primary brand coral used across the hero + footer
-const FONT = "var(--font-nunito), 'Nunito', system-ui, sans-serif";
+const FONT = "var(--sans)";
 const DIVIDER = "rgba(28,43,48,0.12)"; // same hairline used elsewhere on the site
 
 type FaqCopy = {
@@ -28,7 +28,7 @@ export default function FaqSection({ faq, serif }: { faq: FaqCopy; serif: string
   const [open, setOpen] = useState(0);
 
   return (
-    <section style={{ position: "relative", background: "#ffffff", padding: "clamp(80px,14vh,150px) 0 clamp(120px,20vh,220px)" }}>
+    <section id="faq" style={{ position: "relative", background: "#ffffff", padding: "clamp(80px,14vh,150px) 0 clamp(120px,20vh,220px)" }}>
       {/* ── header: coral eyebrow + big serif title (matches the other sections) ── */}
       <div style={{ textAlign: "center", padding: "0 6%", marginBottom: "clamp(48px,8vh,92px)" }}>
         <div
