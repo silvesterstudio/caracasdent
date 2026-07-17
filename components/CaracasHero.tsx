@@ -1025,7 +1025,8 @@ export default function CaracasHero({
     const el = typeof target === "string" ? (document.querySelector(target) as HTMLElement | null) : null;
     if (typeof target === "string" && !el) return;
     if (lenis && typeof lenis.scrollTo === "function") {
-      lenis.scrollTo(el ?? (target as number), { offset: el ? -64 : 0 });
+      // force: a STOPPED Lenis (menu sheet open) silently ignores scrollTo otherwise
+      lenis.scrollTo(el ?? (target as number), { offset: el ? -64 : 0, force: true });
     } else if (el) {
       window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: "smooth" });
     } else {
@@ -1037,6 +1038,9 @@ export default function CaracasHero({
   // selector, the very top, or the footer/contact at the bottom of the document).
   const menuNav = (target: string) => {
     setMenuOpen(false);
+    // the sheet freeze STOPPED Lenis; restart it NOW — the [menuOpen] effect only
+    // restarts it after the re-render, which is too late for the scroll below
+    if (lenis) lenis.start();
     if (target === "top") goTo(0);
     else if (target === "footer") goTo(document.documentElement.scrollHeight);
     else goTo(target);
