@@ -213,10 +213,17 @@ a:hover {
 .cd-svc-card:hover img {
   transform: scale(1.05);
 }
-/* on the coral 06–10 rows a coral hover would vanish — flood ink instead */
-.cd-svc-circle--ink:hover {
-  background: #1c2b30;
-  color: #ffffff;
+/* service circles do NOT change color on hover (per user) — instead the ↗ arrow
+   rotates 45° to point RIGHT. Overrides the .cd-btn-light pink flood + nudge. */
+.cd-svc-circle:hover {
+  background: #ffffff;
+  color: #161516;
+}
+.cd-svc-circle svg {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cd-svc-circle:hover svg {
+  transform: rotate(45deg);
 }
 
 /* collage image pop: zoom out from 120% to 100% over the first ~2s on appear */

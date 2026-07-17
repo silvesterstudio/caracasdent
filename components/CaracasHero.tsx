@@ -94,6 +94,9 @@ type Doctor = {
   bio: string;
   services: [string, string, string, string];
 };
+// one service: card/row name + the copy shown in the bottom-sheet popup
+export type ServiceItem = { name: string; desc: string; points: string[] };
+
 type Copy = {
   nav: { menu: string; services: string; patientForm: string; city: string; contact: string; basedIn: string };
   menuLinks: { label: string; target: string }[]; // the BIG serif links (2-col grid, reference "About Us / Laboratory / …")
@@ -119,7 +122,7 @@ type Copy = {
   collage: (n: number) => string;
   doctors: [Doctor, Doctor, Doctor];
   results: { title: string; more: string; tiles: string[][] };
-  services: { title: string; cards: string[]; list: string[] };
+  services: { title: string; cards: ServiceItem[]; list: ServiceItem[] };
   process: { eyebrow: string; title: string; label: string; steps: { name: string; desc: string }[]; cta: string };
   faq: { eyebrow: string; title: string; items: { q: string; a: string }[] };
   footer: {
@@ -136,6 +139,7 @@ const COPY: Record<"ro" | "ru", Copy> = {
   ro: {
     nav: { menu: "Meniu", services: "Servicii", patientForm: "Formular pacient", city: "Chișinău", contact: "Contactează-ne", basedIn: "Ne găsești în" },
     menuLinks: [
+      { label: "Despre noi", target: "cine" },
       { label: "Echipa", target: "#echipa" },
       { label: "Rezultate", target: "#rezultate" },
       { label: "Drumul tău", target: "#drumul" },
@@ -190,9 +194,62 @@ const COPY: Record<"ro" | "ru", Copy> = {
     },
     services: {
       title: "Ce oferim?",
-      // LAVA-style: 5 photo cards ([0] = wide hero) + 5 list rows (06..10)
-      cards: ["Diagnostic complex", "Igienă profesională", "Fațete ceramice", "Implanturi dentare", "All-on-X"],
-      list: ["Sedare și anestezie", "Terapie", "Ortodonție", "Albire profesională", "Chirurgie orală"],
+      // LAVA-style: 5 photo cards ([0] = wide hero) + 5 list rows (06..10);
+      // desc + points feed the bottom-sheet popup that opens on click
+      cards: [
+        {
+          name: "Diagnostic complex",
+          desc: "Evaluare completă cu radiografie 3D, scanare intraorală și un plan de tratament personalizat — fundația oricărui tratament reușit.",
+          points: ["Radiografie panoramică & CBCT 3D", "Scanare intraorală digitală", "Plan de tratament transparent", "Consultație gratuită"],
+        },
+        {
+          name: "Igienă profesională",
+          desc: "Detartraj, air-flow și periaj profesional — prevenția care păstrează dinții sănătoși și respirația proaspătă.",
+          points: ["Detartraj cu ultrasunete", "Air-flow", "Periaj și fluorizare profesională", "Recomandări personalizate de îngrijire"],
+        },
+        {
+          name: "Fațete ceramice",
+          desc: "Fațete subțiri din ceramică, proiectate digital pentru un zâmbet natural și luminos — fără sacrificarea dinților sănătoși.",
+          points: ["Ceramică E-max", "Digital Smile Design", "Preparare minim invazivă", "Rezultat natural, de durată"],
+        },
+        {
+          name: "Implanturi dentare",
+          desc: "Implanturi planificate digital, cu precizie chirurgicală și rezultate de durată — de la un singur dinte la reconstrucții complete.",
+          points: ["Implant unitar", "Ghid chirurgical digital", "Sinus lift & grefă osoasă", "Coroane pe implant"],
+        },
+        {
+          name: "All-on-X",
+          desc: "Dantură fixă completă pe 4–6 implanturi, într-o singură etapă — soluția modernă pentru edentația totală.",
+          points: ["All-on-4 / All-on-6", "Dinți ficși în 24–72 de ore", "Planificare 3D completă", "Îngrijire post-tratament inclusă"],
+        },
+      ],
+      list: [
+        {
+          name: "Sedare și anestezie",
+          desc: "Tratamente fără durere și fără anxietate — sedare inhalatorie și anestezie modernă, pentru un confort total.",
+          points: ["Sedare inhalatorie", "Anestezie computerizată", "Confort pentru pacienții anxioși"],
+        },
+        {
+          name: "Terapie",
+          desc: "Tratamente de canal la microscop și obturații estetice — păstrăm dinții naturali sănătoși cât mai mult timp.",
+          points: ["Tratament de canal la microscop", "Obturații estetice", "Coroane & punți"],
+        },
+        {
+          name: "Ortodonție",
+          desc: "Aliniem dinții cu aparate fixe sau gutiere transparente — pentru o mușcătură corectă și un zâmbet drept, la orice vârstă.",
+          points: ["Gutiere transparente", "Aparat fix ceramic", "Contenție"],
+        },
+        {
+          name: "Albire profesională",
+          desc: "Albire profesională sigură, cu rezultate vizibile de la prima ședință — fără sensibilitate.",
+          points: ["Albire în cabinet", "Kit personalizat pentru acasă", "Rezultat cu până la 8 nuanțe mai luminos"],
+        },
+        {
+          name: "Chirurgie orală",
+          desc: "Extracții complexe și intervenții chirurgicale efectuate în siguranță, cu recuperare rapidă.",
+          points: ["Extracții de molari de minte", "Rezecții apicale", "Chirurgie parodontală"],
+        },
+      ],
     },
     process: {
       eyebrow: "— 05",
@@ -272,6 +329,7 @@ const COPY: Record<"ro" | "ru", Copy> = {
   ru: {
     nav: { menu: "Меню", services: "Услуги", patientForm: "Анкета пациента", city: "Кишинёв", contact: "Свяжитесь с нами", basedIn: "Мы находимся в" },
     menuLinks: [
+      { label: "О нас", target: "cine" },
       { label: "Команда", target: "#echipa" },
       { label: "Результаты", target: "#rezultate" },
       { label: "Ваш путь", target: "#drumul" },
@@ -323,9 +381,62 @@ const COPY: Record<"ro" | "ru", Copy> = {
     },
     services: {
       title: "Что мы предлагаем?",
-      // LAVA-style: 5 photo cards ([0] = wide hero) + 5 list rows (06..10)
-      cards: ["Комплексная диагностика", "Профессиональная гигиена", "Керамические виниры", "Дентальные импланты", "All-on-X"],
-      list: ["Седация и анестезия", "Терапия", "Ортодонтия", "Профессиональное отбеливание", "Хирургия полости рта"],
+      // LAVA-style: 5 photo cards ([0] = wide hero) + 5 list rows (06..10);
+      // desc + points feed the bottom-sheet popup that opens on click
+      cards: [
+        {
+          name: "Комплексная диагностика",
+          desc: "Полное обследование с 3D-рентгеном, интраоральным сканированием и персональным планом лечения — основа любого успешного лечения.",
+          points: ["Панорамный снимок и CBCT 3D", "Цифровое интраоральное сканирование", "Прозрачный план лечения", "Бесплатная консультация"],
+        },
+        {
+          name: "Профессиональная гигиена",
+          desc: "Снятие зубного камня, air-flow и профессиональная чистка — профилактика, которая сохраняет зубы здоровыми.",
+          points: ["Ультразвуковая чистка", "Air-flow", "Полировка и фторирование", "Персональные рекомендации по уходу"],
+        },
+        {
+          name: "Керамические виниры",
+          desc: "Тонкие керамические виниры, созданные в цифровом протоколе — естественная и сияющая улыбка без обточки здоровых зубов.",
+          points: ["Керамика E-max", "Digital Smile Design", "Минимально инвазивная подготовка", "Естественный долговечный результат"],
+        },
+        {
+          name: "Дентальные импланты",
+          desc: "Импланты с цифровым планированием, хирургической точностью и долговечным результатом — от одного зуба до полных реконструкций.",
+          points: ["Одиночный имплант", "Хирургический шаблон", "Синус-лифтинг и костная пластика", "Коронки на имплантах"],
+        },
+        {
+          name: "All-on-X",
+          desc: "Полный несъёмный протез на 4–6 имплантах за один этап — современное решение при полной адентии.",
+          points: ["All-on-4 / All-on-6", "Несъёмные зубы за 24–72 часа", "Полное 3D-планирование", "Постлечебный уход включён"],
+        },
+      ],
+      list: [
+        {
+          name: "Седация и анестезия",
+          desc: "Лечение без боли и тревоги — ингаляционная седация и современная анестезия для полного комфорта.",
+          points: ["Ингаляционная седация", "Компьютерная анестезия", "Комфорт для тревожных пациентов"],
+        },
+        {
+          name: "Терапия",
+          desc: "Лечение каналов под микроскопом и эстетические пломбы — сохраняем природные зубы здоровыми как можно дольше.",
+          points: ["Лечение каналов под микроскопом", "Эстетические пломбы", "Коронки и мосты"],
+        },
+        {
+          name: "Ортодонтия",
+          desc: "Выравниваем зубы брекетами или прозрачными капами — правильный прикус и ровная улыбка в любом возрасте.",
+          points: ["Прозрачные капы", "Керамические брекеты", "Ретенция"],
+        },
+        {
+          name: "Профессиональное отбеливание",
+          desc: "Безопасное профессиональное отбеливание с видимым результатом с первого сеанса — без чувствительности.",
+          points: ["Отбеливание в клинике", "Персональный набор для дома", "Результат до 8 оттенков светлее"],
+        },
+        {
+          name: "Хирургия полости рта",
+          desc: "Сложные удаления и хирургические вмешательства — безопасно и с быстрым восстановлением.",
+          points: ["Удаление зубов мудрости", "Апикальные резекции", "Пародонтальная хирургия"],
+        },
+      ],
     },
     process: {
       eyebrow: "— 05",
@@ -1043,7 +1154,12 @@ export default function CaracasHero({
     if (lenis) lenis.start();
     if (target === "top") goTo(0);
     else if (target === "footer") goTo(document.documentElement.scrollHeight);
-    else goTo(target);
+    else if (target === "cine") {
+      // "Despre noi": the Cine suntem panel is fully risen at the END of the hero
+      // scrub (p=1), i.e. one viewport above the hero root's bottom edge
+      const root = rootRef.current;
+      if (root) goTo(root.offsetTop + root.offsetHeight - window.innerHeight);
+    } else goTo(target);
   };
 
   // freeze the (Lenis) page scroll while the menu overlay is open, and re-run the scroll
@@ -1276,7 +1392,7 @@ export default function CaracasHero({
               {t.nav.services}:
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "clamp(12px,1.4vw,24px)", marginTop: "clamp(14px,3vh,30px)" }}>
-              {t.services.cards.slice(1).map((name, i) => (
+              {t.services.cards.slice(1).map(({ name }, i) => (
                 <button
                   key={i}
                   className="cd-menu-card"
