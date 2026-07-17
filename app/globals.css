@@ -44,8 +44,20 @@ body {
   padding: 0;
 }
 
+/* no visible scrollbar — the page scrolls normally (wheel/keys/Lenis), but the
+   track doesn't reserve the ~15px strip. Bonus: 100vw === 100%, so the whole
+   scrollbar width-world class of layout bugs (hero sbw compensation, Echipa's
+   50vw seam) can't reappear. */
+html {
+  scrollbar-width: none; /* Firefox */
+}
+html::-webkit-scrollbar {
+  display: none; /* Chrome / Edge / Safari */
+  width: 0;
+}
+
 body {
-  background: #f4f6f6;
+  background: #fdf0f2;
   font-family: var(--sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -66,19 +78,20 @@ a:hover {
   color: #ffffff;
 }
 
-/* expanded-menu hovers: big serif links + utility rows tint coral; the B&W
-   service cards colorize and gently zoom */
+/* expanded-menu hovers: big serif links + utility rows tint INK (the sheet is
+   coral now, so a coral hover would vanish); the B&W service cards colorize
+   and gently zoom */
 .cd-menu-big {
   transition: color 0.3s ease;
 }
 .cd-menu-big:hover {
-  color: #eb7180 !important;
+  color: #1c2b30 !important;
 }
 .cd-menu-util {
   transition: color 0.3s ease;
 }
 .cd-menu-util:hover {
-  color: #eb7180 !important;
+  color: #1c2b30 !important;
 }
 .cd-menu-card img {
   transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), filter 0.4s ease;
@@ -86,6 +99,124 @@ a:hover {
 .cd-menu-card:hover img {
   transform: scale(1.05);
   filter: grayscale(0) !important;
+}
+
+/* pink CTA (header "Contactează-ne" + hero book button): brand coral with white
+   text, hover floods WHITE; the arrow (currentColor) nudges along its diagonal */
+.cd-btn-pink {
+  background: #eb7180;
+  color: #ffffff;
+  transition: background 0.35s ease, color 0.35s ease;
+}
+.cd-btn-pink:hover {
+  background: #ffffff;
+  color: #161516;
+}
+.cd-btn-pink svg,
+.cd-btn-light svg {
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cd-btn-pink:hover svg,
+.cd-btn-light:hover svg {
+  transform: translate(2px, -2px);
+}
+
+/* white CTA (Echipa CTA + service arrow-circles): ink text on white, hover
+   floods coral-pink */
+.cd-btn-light {
+  background: #ffffff;
+  color: #161516;
+  transition: background 0.35s ease, color 0.35s ease;
+}
+.cd-btn-light:hover {
+  background: #eb7180;
+  color: #ffffff;
+}
+
+/* header menu icon — two bars that MORPH into a ✕ when the sheet is open, with a
+   playful squeeze of the lower bar on hover */
+.cd-burger {
+  position: relative;
+  width: 17px;
+  height: 11px;
+  display: inline-block;
+  flex: none;
+}
+.cd-burger span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1.4px;
+  border-radius: 1px;
+  background: currentColor;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), top 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cd-burger span:first-child {
+  top: 2px;
+}
+.cd-burger span:last-child {
+  top: 8px;
+}
+.cd-menu-btn:hover .cd-burger:not(.cd-burger--x) span:last-child {
+  transform: scaleX(0.6);
+  transform-origin: left center;
+}
+.cd-burger--x span:first-child {
+  top: 5px;
+  transform: rotate(45deg);
+}
+.cd-burger--x span:last-child {
+  top: 5px;
+  transform: rotate(-45deg);
+}
+
+/* marker highlight — a pink "marker stroke" behind a heading word; sweeps in
+   left→right (scaleX) when the heading gets .cd-mark-on (IntersectionObserver) */
+.cd-mark-wrap {
+  position: relative;
+  /* own stacking context: the z:-1 mark must hide behind the TEXT only — without
+     this it falls behind the section's background and never shows (Ce oferim) */
+  isolation: isolate;
+}
+.cd-mark-wrap::before {
+  content: "";
+  position: absolute;
+  left: -0.1em;
+  right: -0.12em;
+  top: 0.12em;
+  bottom: 0;
+  background: #f49fad;
+  border-radius: 0.18em 0.28em 0.22em 0.3em;
+  transform: scaleX(0) rotate(-1.2deg);
+  transform-origin: left center;
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.15s;
+  z-index: -1;
+}
+.cd-mark-on .cd-mark-wrap::before {
+  transform: scaleX(1) rotate(-1.2deg);
+}
+
+/* services (LAVA-style) — light arrow circles on the cards/rows + slow photo zoom */
+.cd-svc-circle {
+  width: clamp(40px, 4.5vw, 64px);
+  height: clamp(40px, 4.5vw, 64px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  cursor: pointer;
+}
+.cd-svc-card img {
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cd-svc-card:hover img {
+  transform: scale(1.05);
+}
+/* on the coral 06–10 rows a coral hover would vanish — flood ink instead */
+.cd-svc-circle--ink:hover {
+  background: #1c2b30;
+  color: #ffffff;
 }
 
 /* collage image pop: zoom out from 120% to 100% over the first ~2s on appear */

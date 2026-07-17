@@ -7,14 +7,15 @@ import ImageSlot from "./ImageSlot";
  * EchipaSection — the team, as its OWN 300vh scroll section (a pinned 100vh viewport).
  * Layout is an exact copy of the aventuradentalarts.com "Our Solutions" services
  * section, translated into the site's design system (Inter Tight + PP Editorial
- * New, coral accent) — on the BRAND INK (#1c2b30) as a full dark section, so the
- * team block contrasts against the white "Cine suntem?" before it and the white
- * Rezultate after it (the reference is dark too; we use our ink, not their black):
- *   • LEFT  — full-height B&W doctor portrait (x0 → 50vw), wipes Dr.1 → 2 → 3 from
- *     the bottom; each incoming image ZOOM-SETTLES 120% → 100%. The photo FADES
- *     INTO THE INK at its bottom (the reference's scrim) so text over it reads.
- *   • giant italic editorial NAME, centered on the viewport, spanning the split,
- *     two overlapping lines (lineHeight 0.85) hugging the bottom.
+ * New) — on a DEEP-ROSE sheet (dark rosewood gradient — the aventura dark mood
+ * translated into the site's pink family); blush-white text, coral accent:
+ *   • LEFT  — full-height COLOR doctor portrait (x0 → 50vw), wipes Dr.1 → 2 → 3 from
+ *     the bottom; each incoming image ZOOM-SETTLES 120% → 100%. No bottom scrim —
+ *     the photo keeps its full height (per user; the old ink fade made the dark
+ *     half visually swallow the photo).
+ *   • giant WHITE NAME, centered on the viewport, spanning the split, two
+ *     overlapping lines (lh 0.85, ~10vw) hugging the bottom — Inter Tight 500
+ *     for every word (no italic, no marker), per user.
  *   • bottom-left — "Echipa noastră:" + the three doctors as an index (active = ink).
  *   • RIGHT column (x 70.8%, w 26.9%, like the reference) — muted kicker
  *     (specialitate) → BOLD lead paragraph (bio) → color candid photo beside a
@@ -25,29 +26,20 @@ import ImageSlot from "./ImageSlot";
  * `dr1Ref` is kept for the component interface (the old Scopul hand-off plumbing).
  */
 
-// dark-on-ink theme built from CaracasHero's tokens: the section bg IS the brand
-// ink (#1c2b30); text flips to a warm off-white; coral stays the single accent.
-const INK_BG = "#1c2b30";
-const TEXT = "#eef3f4";
-const MUTED = "rgba(238,243,244,0.60)";
-const FAINT = "rgba(238,243,244,0.35)";
-const LINE = "rgba(238,243,244,0.16)";
+// DEEP-ROSE theme (per user — the aventura dark mood, but in the site's pink
+// family instead of near-black): dark rosewood surface, blush-white text, coral accent.
+const TEXT = "#fdf0f2"; // the site's blush as the LIGHT text color
+const MUTED = "rgba(253,240,242,0.62)";
+const FAINT = "rgba(253,240,242,0.40)";
+const LINE = "rgba(253,240,242,0.18)";
 const ACCENT = "#eb7180";
 const IMG_BG = "#dbe3e3"; // same neutral as the "Cine suntem?" collage placeholders
 const FONT = "var(--sans)";
 
-// subtle depth on the flat ink — a faint top-right glow over the content column.
-// (Kept OFF the photo's bottom-left region so PHOTO_FADE meets a pure-ink bg with
-// no visible seam.)
-const BG =
-  "radial-gradient(120% 90% at 78% 10%, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0) 55%)," + INK_BG;
+// dark PLUM-MAUVE (pink undertone, deliberately NOT red/burgundy — per user)
+const ROSE_DEEP = "#2a1b26"; // darkest corner of the sheet
+const BG = "linear-gradient(158deg,#453043 0%,#372534 55%,#2a1b26 100%)";
 
-// the reference's B&W portrait treatment (candids stay color, exactly like there)
-const BW = "grayscale(1) contrast(1.04)";
-// the reference fades its portrait into the section bg at the bottom so the text
-// over it reads — into the ink, exactly like their dark scrim.
-const PHOTO_FADE =
-  "linear-gradient(to top, #1c2b30 1.5%, rgba(28,43,48,0.88) 11%, rgba(28,43,48,0) 42%)";
 
 const cl = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
 const sm = (x: number, a: number, b: number) => cl((x - a) / (b - a));
@@ -151,7 +143,7 @@ export default function EchipaSection({
   }, [doctors]);
 
   return (
-    <section id="echipa" ref={rootRef} style={{ position: "relative", height: "300vh", background: INK_BG }}>
+    <section id="echipa" ref={rootRef} style={{ position: "relative", height: "300vh", background: ROSE_DEEP }}>
       <div
         style={{
           position: "sticky",
@@ -165,22 +157,23 @@ export default function EchipaSection({
         {/* ── LEFT: full-height B&W portrait (exactly 0 → 50vw like the reference),
             wipes 1 → 2 → 3 (each zoom-settles 120%→100%), fading into the ink at
             the bottom so the centered name + index always read. ── */}
-        <div style={{ position: "absolute", left: 0, top: 0, width: "50%", height: "100%", overflow: "hidden", zIndex: 1 }}>
+        {/* width is 50vw, NOT 50%: the sticky's 100% excludes the scrollbar, so 50%
+            would leave the dark half a scrollbar-width wider than the photo (the
+            width-world gotcha — same fix as the hero's video insets) */}
+        <div style={{ position: "absolute", left: 0, top: 0, width: "50vw", height: "100%", overflow: "hidden", zIndex: 1 }}>
           <div ref={dr1Ref} style={{ position: "absolute", inset: 0, zIndex: 1, background: IMG_BG }}>
-            <ImageSlot bg={IMG_BG} src={photos[0]} label={doctors[0].name.join(" ")} style={{ filter: BW }} />
+            <ImageSlot bg={IMG_BG} src={photos[0]} label={doctors[0].name.join(" ")} />
           </div>
           <div ref={imgBRef} style={{ position: "absolute", inset: 0, zIndex: 2, background: IMG_BG, overflow: "hidden", clipPath: "inset(100% 0px 0px 0px)" }}>
             <div ref={imgBScaleRef} style={{ width: "100%", height: "100%", transform: "scale(1.2)", willChange: "transform" }}>
-              <ImageSlot bg={IMG_BG} src={photos[1]} label={doctors[1].name.join(" ")} style={{ filter: BW }} />
+              <ImageSlot bg={IMG_BG} src={photos[1]} label={doctors[1].name.join(" ")} />
             </div>
           </div>
           <div ref={imgCRef} style={{ position: "absolute", inset: 0, zIndex: 3, background: IMG_BG, overflow: "hidden", clipPath: "inset(100% 0px 0px 0px)" }}>
             <div ref={imgCScaleRef} style={{ width: "100%", height: "100%", transform: "scale(1.2)", willChange: "transform" }}>
-              <ImageSlot bg={IMG_BG} src={photos[2]} label={doctors[2].name.join(" ")} style={{ filter: BW }} />
+              <ImageSlot bg={IMG_BG} src={photos[2]} label={doctors[2].name.join(" ")} />
             </div>
           </div>
-          {/* bottom fade into the section ink — the reference's dark scrim, in our brand color */}
-          <div style={{ position: "absolute", inset: 0, zIndex: 4, background: PHOTO_FADE, pointerEvents: "none" }} />
         </div>
 
         {/* ── per-doctor content (cross-fades with the image wipe) ── */}
@@ -192,24 +185,23 @@ export default function EchipaSection({
             }}
             style={{ position: "absolute", inset: 0, zIndex: 10, opacity: idx === 0 ? 1 : 0 }}
           >
-            {/* giant editorial NAME — centered on the viewport, spanning the split,
-                two overlapping italic lines hugging the bottom (the reference's
-                136px / lh 0.8 Instrument Serif italic, in our editorial + ink). */}
+            {/* giant NAME — centered on the viewport, spanning the split, two
+                overlapping lines hugging the bottom — ONE font for every word
+                (Inter Tight 500, no italic, no marker) in WHITE, per user. */}
             <div
               style={{
                 position: "absolute",
                 left: 0,
-                right: 0,
-                bottom: "5%", // enough room for the ș/comma descenders at lineHeight 0.85
+                width: "100vw", // centered on the WINDOW midpoint = the photo seam (see 50vw note)
+                bottom: "3.5%", // hugs the bottom; room for the ș descenders
                 zIndex: 2,
                 textAlign: "center",
-                fontFamily: serif,
-                fontStyle: "italic",
-                fontWeight: 400,
-                fontSize: "clamp(56px, 9vw, 160px)",
+                fontFamily: FONT,
+                fontWeight: 500,
+                fontSize: "clamp(48px, 7.5vw, 156px)",
                 lineHeight: 0.85,
-                letterSpacing: "-0.01em",
-                color: TEXT,
+                letterSpacing: "-0.03em",
+                color: "#ffffff",
                 pointerEvents: "none",
               }}
             >
@@ -218,9 +210,12 @@ export default function EchipaSection({
               {doc.name[1]}
             </div>
 
-            {/* bottom-left INDEX — "Echipa noastră:" + the three doctors (this one active) */}
-            <div style={{ position: "absolute", left: "2.2%", bottom: "5%", zIndex: 3, pointerEvents: "none" }}>
-              <div style={{ fontFamily: FONT, fontSize: "clamp(12px,0.86vw,14px)", fontWeight: 500, color: MUTED, marginBottom: "16px" }}>
+            {/* bottom-left INDEX — "Echipa noastră:" + the three doctors (this one active).
+                Reference: ~0.85-0.9vw regular, active pure white, ~42px air under the
+                label, block ending ~4.5% from the bottom. */}
+            {/* bottom-left INDEX — on the site's 4% grid; the ACTIVE doctor reads coral */}
+            <div style={{ position: "absolute", left: "4%", bottom: "4.5%", zIndex: 3, pointerEvents: "none", textShadow: "0 1px 3px rgba(46,22,28,0.55), 0 2px 18px rgba(46,22,28,0.5)" }}>
+              <div style={{ fontFamily: FONT, fontSize: "clamp(13px,0.85vw,17px)", fontWeight: 400, color: MUTED, marginBottom: "clamp(24px,4.5vh,46px)" }}>
                 Echipa noastră:
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -229,10 +224,11 @@ export default function EchipaSection({
                     key={di}
                     style={{
                       fontFamily: FONT,
-                      fontSize: "clamp(12.5px,0.88vw,14.5px)",
-                      fontWeight: di === idx ? 700 : 500,
-                      lineHeight: 1.4,
-                      color: di === idx ? TEXT : FAINT,
+                      fontSize: "clamp(13px,0.9vw,18px)",
+                      fontWeight: di === idx ? 600 : 400,
+                      lineHeight: 1.35,
+                      color: di === idx ? "#ffffff" : FAINT, // coral melts on the pink surface
+                      transition: "color 0.3s ease",
                     }}
                   >
                     {d.name[0]} {d.name[1]}
@@ -244,24 +240,29 @@ export default function EchipaSection({
             {/* RIGHT column — the reference's exact geometry (x 70.8%, w 26.9%):
                 muted kicker → BOLD lead → color candid + hairlined services list.
                 (Top nudged below the fixed header; the reference has no header there.) */}
-            <div style={{ position: "absolute", left: "70.8%", top: "10%", width: "26.9%", zIndex: 4, display: "flex", flexDirection: "column" }}>
-              <div style={{ fontFamily: FONT, fontSize: "clamp(12px,0.86vw,14px)", fontWeight: 500, color: MUTED }}>
+            <div style={{ position: "absolute", left: "70.8%", top: "8.5%", width: "26.9%", zIndex: 4, display: "flex", flexDirection: "column" }}>
+              {/* specialty as the SITE's eyebrow (FAQ pattern: coral, uppercase, spaced) */}
+              <div style={{ fontFamily: FONT, fontSize: "clamp(11px,0.8vw,13px)", fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: "#ffffff" }}>
                 {doc.spec}
               </div>
+              {/* bio — light and airy for the blush surface (the old 600/1.28 + 11vh
+                  gap was the dark reference's voice) */}
               <div
                 style={{
                   fontFamily: FONT,
-                  fontSize: "clamp(15px, 1.18vw, 19px)",
-                  fontWeight: 600,
-                  lineHeight: 1.18,
-                  letterSpacing: "-0.02em",
-                  color: TEXT,
-                  marginTop: "clamp(40px,9vh,90px)",
+                  fontSize: "clamp(15px, 1.2vw, 24px)",
+                  fontWeight: 400,
+                  lineHeight: 1.5,
+                  letterSpacing: "-0.01em",
+                  color: "rgba(253,240,242,0.82)",
+                  marginTop: "clamp(20px,4vh,44px)",
                 }}
               >
                 {doc.bio}
               </div>
-              <div style={{ display: "flex", gap: "clamp(14px,1.3vw,24px)", alignItems: "flex-start", marginTop: "clamp(20px,4vh,42px)" }}>
+              {/* candid row sits CLOSE under the lead (~1.6vh in the reference),
+                  with a wide ~2.2vw gutter between the photo and the list */}
+              <div style={{ display: "flex", gap: "clamp(16px,2.2vw,46px)", alignItems: "flex-start", marginTop: "clamp(12px,1.8vh,22px)" }}>
                 {/* candid stays COLOR (like the reference) — tall 2:3, sharp corners */}
                 <div
                   style={{
@@ -285,14 +286,14 @@ export default function EchipaSection({
                         alignItems: "center",
                         justifyContent: "space-between",
                         gap: "12px",
-                        padding: "11px 0",
+                        padding: "18px 0", // the reference's rows breathe (~19px vertical)
                         borderTop: `1px solid ${LINE}`,
                         borderBottom: si === doc.services.length - 1 ? `1px solid ${LINE}` : undefined,
                       }}
                     >
-                      <span style={{ fontFamily: FONT, fontSize: "clamp(12px,0.88vw,14.5px)", fontWeight: 600, lineHeight: 1.25, color: TEXT }}>{s}</span>
+                      <span style={{ fontFamily: FONT, fontSize: "clamp(13px,0.85vw,17px)", fontWeight: 400, lineHeight: 1.3, color: TEXT }}>{s}</span>
                       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flex: "none" }}>
-                        <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke={ACCENT} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke={TEXT} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </div>
                   ))}
@@ -302,20 +303,20 @@ export default function EchipaSection({
           </div>
         ))}
 
-        {/* ── CTA (bottom-right) — the site's coral hero-button geometry ── */}
+        {/* ── CTA (bottom-right) — WHITE on the pink surface (a pink button would melt
+            into it); hovers to coral, on the 4% grid ── */}
         <button
+          className="cd-btn-light"
           style={{
             position: "absolute",
-            right: "2.2%",
-            bottom: "5%",
+            right: "4%",
+            bottom: "4.5%",
             appearance: "none",
             border: 0,
             cursor: "pointer",
             display: "inline-flex",
             alignItems: "center",
             gap: "12px",
-            background: ACCENT,
-            color: "#ffffff",
             borderRadius: "3px",
             padding: "11px 20px",
             fontFamily: FONT,
@@ -328,7 +329,7 @@ export default function EchipaSection({
         >
           {book}
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ flex: "none" }}>
-            <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
       </div>

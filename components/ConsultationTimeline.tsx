@@ -16,7 +16,7 @@ import ImageSlot from "./ImageSlot";
  * the path ends on a single node and the booking CTA.
  */
 
-const BG = "#ffffff";
+const BG = "#fdf0f2"; // the site-wide soft blush surface
 const INK = "#1c2b30";
 const ACCENT = "#fe7183";
 const FONT = "var(--sans)";

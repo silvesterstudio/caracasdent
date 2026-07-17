@@ -31,11 +31,11 @@ import SiteFooter from "./SiteFooter";
 const FONT = "var(--sans)";
 const SERIF = "var(--editorial)";
 
-// Brand palette — kept deliberately tight: dark ink, white, one light neutral,
-// and a single coral accent. No other colours in the hero.
-const BG = "#ffffff"; // sections after the team are pure white, matching the header/hero
+// Brand palette — kept deliberately tight: dark ink, soft blush, and a single
+// coral accent. All light sections share the BLUSH surface (per user).
+const BG = "#fdf0f2"; // light sections sit on the soft blush, matching Echipa
 const INK = "#1c2b30";
-const LIGHT = "#ffffff";
+const LIGHT = "#fdf0f2";
 const ACCENT = "#eb7180";
 const MEDIA_BG = "#c9d2d2";
 
@@ -43,10 +43,11 @@ const MEDIA_BG = "#c9d2d2";
 //    Swap these for the clinic's real photography later; the layout is identical either way.
 const U = (id: string, w: number, h: number, faces = false) =>
   `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&q=80&w=${w}&h=${h}${faces ? "&crop=faces" : ""}`;
+// dark-context portraits (per user — moody studio/dim-clinic shots, not bright clinical)
 const DOCTOR_PHOTOS = [
-  U("1674775372058-c4c8813c6611", 1000, 1300, true), // Dr. Ion Caracaș
-  U("1670191247079-f9713ae06dcf", 1000, 1300, true), // Dr. Elena Caracaș
-  U("1667133295308-9ef24f71952e", 1000, 1300, true), // Dr. Nicolae Caracaș
+  U("1620668233692-c83e9563f337", 1000, 1300, true), // Dr. Ion Caracaș — dark suit, black studio
+  U("1756699197325-946a9209430b", 1000, 1300, true), // Dr. Elena Caracaș — dark studio, smile tablet
+  U("1663182107973-abb58c2c13e7", 1000, 1300, true), // Dr. Nicolae Caracaș — dim clinic, dark scrubs
 ];
 const DOCTOR_CANDIDS = [
   U("1663151064065-cb334788f77d", 700, 900),
@@ -59,11 +60,12 @@ const DOCTOR_CANDIDS = [
 //    The roster below rotates every 1.5s with a scan-line wipe — swap in the
 //    clinic's real team photography later (keep the tall ~2:3 portrait crop).
 const CINE_IMAGES = [
-  U("1588776813941-dcf9c55e84d2", 1000, 1500),
-  U("1674775372058-c4c8813c6611", 1000, 1500, true),
-  U("1670191247079-f9713ae06dcf", 1000, 1500, true),
-  U("1683349370055-7eba66a404c6", 1000, 1500),
-  U("1667133295308-9ef24f71952e", 1000, 1500, true),
+  // team-at-work in the clinic (dentist + patient scenes), per user — no solo portraits
+  U("1667133295315-820bb6481730", 1000, 1500), // dentist examining patient with intraoral scanner
+  U("1657470179447-0f5aa16daa91", 1000, 1500), // dentist working on a patient
+  U("1662837625421-5fd8ed6131a0", 1000, 1500), // dentist examining a patient chairside
+  U("1697033803887-b1a061290569", 1000, 1500), // patient in the chair, teeth being checked
+  U("1560070201-d3d11effa179", 1000, 1500), // hygienist with instruments at the patient's mouth
 ];
 // ── expanded-menu service cards (square crops of the 4 service photos, shown B&W like the reference)
 const MENU_SERVICE_IMAGES = [
@@ -109,7 +111,6 @@ type Copy = {
   marquee: string;
   goalTitle: string;
   paragraph: string;
-  aboutMore: string;
   team: string;
   teamTitle: string;
   teamLead: string;
@@ -118,7 +119,7 @@ type Copy = {
   collage: (n: number) => string;
   doctors: [Doctor, Doctor, Doctor];
   results: { title: string; more: string; tiles: string[][] };
-  services: { title: string; intro: string; steps: { name: string; desc: string; points: string[] }[] };
+  services: { title: string; cards: string[]; list: string[] };
   process: { eyebrow: string; title: string; label: string; steps: { name: string; desc: string }[]; cta: string };
   faq: { eyebrow: string; title: string; items: { q: string; a: string }[] };
   footer: {
@@ -165,7 +166,6 @@ const COPY: Record<"ro" | "ru", Copy> = {
     // *runs* render in the editorial italic (mosaicist-style accents)
     paragraph:
       "O *familie de medici* cu o istorie de peste 25 de ani: din 1992, când *Dr. Ion Caracaș* și *Dr. Elena Caracaș* au deschis prima clinică privată, construim stomatologie bazată pe înțelegere, siguranță și cele mai înalte standarde.",
-    aboutMore: "Mai multe",
     team: "Echipa noastră:",
     teamTitle: "Echipa noastră",
     teamLead: "Medici cu experiență, dedicați fiecărui zâmbet.",
@@ -189,31 +189,10 @@ const COPY: Record<"ro" | "ru", Copy> = {
       ],
     },
     services: {
-      title: "Ce oferim",
-      intro:
-        "Fiecare tratament este planificat individual, cu tehnologie modernă și o echipă dedicată — pentru rezultate care arată și se simt naturale.",
-      steps: [
-        {
-          name: "Implantologie",
-          desc: "Implanturi și reconstrucții complete, planificate digital, cu precizie chirurgicală și rezultate de durată.",
-          points: ["Implant unitar", "All-on-4 / All-on-6", "Sinus lift", "Grefă osoasă"],
-        },
-        {
-          name: "Ortodonție",
-          desc: "Aliniem dinții cu aparate fixe și gutiere transparente — pentru o mușcătură corectă și un zâmbet drept, la orice vârstă.",
-          points: ["Aparat dentar fix", "Gutiere transparente", "Aparat ceramic", "Contenție"],
-        },
-        {
-          name: "Terapie",
-          desc: "Îngrijire completă care păstrează dinții sănătoși, funcționali și frumoși pe termen lung.",
-          points: ["Tratament de canal", "Obturații estetice", "Coroane & punți", "Parodontologie"],
-        },
-        {
-          name: "Estetică dentară",
-          desc: "Transformăm zâmbetul cu tehnici minim invazive, pentru un rezultat natural și luminos.",
-          points: ["Fațete ceramice", "Albire profesională", "Bonding estetic", "Digital Smile Design"],
-        },
-      ],
+      title: "Ce oferim?",
+      // LAVA-style: 5 photo cards ([0] = wide hero) + 5 list rows (06..10)
+      cards: ["Diagnostic complex", "Igienă profesională", "Fațete ceramice", "Implanturi dentare", "All-on-X"],
+      list: ["Sedare și anestezie", "Terapie", "Ortodonție", "Albire profesională", "Chirurgie orală"],
     },
     process: {
       eyebrow: "— 05",
@@ -320,7 +299,6 @@ const COPY: Record<"ro" | "ru", Copy> = {
     goalTitle: "Кто мы?",
     paragraph:
       "*Семья врачей* с историей более 25 лет: с 1992 года, когда *д-р Ион Каракаш* и *д-р Елена Каракаш* открыли первую частную клинику, мы строим стоматологию, основанную на понимании, безопасности и высочайших стандартах.",
-    aboutMore: "Подробнее",
     team: "Наша команда:",
     teamTitle: "Наша команда",
     teamLead: "Опытные врачи, преданные каждой улыбке.",
@@ -344,31 +322,10 @@ const COPY: Record<"ro" | "ru", Copy> = {
       ],
     },
     services: {
-      title: "Что мы предлагаем",
-      intro:
-        "Каждое лечение планируется индивидуально, с современными технологиями и преданной командой — ради результата, который выглядит и ощущается естественно.",
-      steps: [
-        {
-          name: "Имплантология",
-          desc: "Импланты и полные реконструкции с цифровым планированием, хирургической точностью и долговечным результатом.",
-          points: ["Одиночный имплант", "All-on-4 / All-on-6", "Синус-лифтинг", "Костная пластика"],
-        },
-        {
-          name: "Ортодонтия",
-          desc: "Выравниваем зубы брекетами и прозрачными капами — ради правильного прикуса и ровной улыбки в любом возрасте.",
-          points: ["Брекет-системы", "Прозрачные капы", "Керамические брекеты", "Ретенция"],
-        },
-        {
-          name: "Терапия",
-          desc: "Комплексный уход, сохраняющий зубы здоровыми, функциональными и красивыми надолго.",
-          points: ["Лечение каналов", "Эстетические пломбы", "Коронки и мосты", "Пародонтология"],
-        },
-        {
-          name: "Эстетическая стоматология",
-          desc: "Преображаем улыбку минимально инвазивными методами — ради естественного и сияющего результата.",
-          points: ["Керамические виниры", "Профессиональное отбеливание", "Эстетический бондинг", "Digital Smile Design"],
-        },
-      ],
+      title: "Что мы предлагаем?",
+      // LAVA-style: 5 photo cards ([0] = wide hero) + 5 list rows (06..10)
+      cards: ["Комплексная диагностика", "Профессиональная гигиена", "Керамические виниры", "Дентальные импланты", "All-on-X"],
+      list: ["Седация и анестезия", "Терапия", "Ортодонтия", "Профессиональное отбеливание", "Хирургия полости рта"],
     },
     process: {
       eyebrow: "— 05",
@@ -513,8 +470,8 @@ export default function CaracasHero({
   // through the release and the end-of-section BUMP disappears entirely.
   scrubHeight = 210,
   marqueeTravel = 430,
-  // white, matching the left panel — so the framed video card's surround reads as the same
-  // sheet as the panel (no #f4f6f6 vs #fff seam around the card).
+  // blush, matching the left panel — so the framed video card's surround reads as the
+  // same sheet as the panel (no seam around the card).
   panelColor = LIGHT,
 }: CaracasHeroProps) {
   const [lang, setLang] = useState<"ro" | "ru">("ro");
@@ -671,36 +628,45 @@ export default function CaracasHero({
       if (m) marqueeStopVw = 97 - (m.offsetWidth / window.innerWidth) * 100;
 
       // auto-fit the goal chunk so it ALWAYS fits one viewport height (it fills the
-      // column on tall screens and shrinks just enough on wide/short ones); keep the
-      // "Scopul nostru" heading matched to the chunk so they read as one sentence
+      // column on tall screens and shrinks just enough on wide/short ones). The
+      // "Cine suntem?" heading is NOT synced to it — it keeps the shared section-title
+      // clamp so it matches "Ce oferim?" exactly (per user).
       const ch = chunkRef.current;
-      const hd = headingRef.current;
       const H = window.innerHeight;
       if (ch && H > 0) {
         ch.style.fontSize = "clamp(40px, 5.3vw, 104px)"; // re-apply base each measure
+        ch.style.lineHeight = "1.14";
         let fs = parseFloat(getComputedStyle(ch).fontSize);
         let h = ch.scrollHeight;
         if (fs > 0 && h > 0) {
           const topPx = H * 0.085; // the chunk starts right under the floating header
-          const fillH = H - topPx - H * 0.11; // fill nearly the whole column (button room below)
+          // fill the column down to H − 4.5vh — the SAME bottom edge the collage is
+          // pinned to (outerGap below), so both columns finish on one line
+          const fillH = H - topPx - H * 0.045;
           fs = Math.min(240, Math.max(24, (fs * fillH) / h));
           ch.style.fontSize = fs + "px";
           h = ch.scrollHeight;
           let grow = 0;
-          while (topPx + h < H * 0.89 && fs < 240 && grow < 14) {
+          while (topPx + h < H * 0.945 && fs < 240 && grow < 14) {
             fs *= 1.035;
             ch.style.fontSize = fs + "px";
             h = ch.scrollHeight;
             grow++;
           }
           let guard = 0;
-          while (topPx + h > H * 0.9 && fs > 24 && guard < 14) {
+          while (topPx + h > H * 0.955 && fs > 24 && guard < 14) {
             fs *= 0.96;
             ch.style.fontSize = fs + "px";
             h = ch.scrollHeight;
             guard++;
           }
-          if (hd) hd.style.fontSize = fs + "px";
+          // font size moves the height in whole-row jumps, so it lands short of the
+          // target; stretch the line-height a touch so the LAST row's bottom sits
+          // exactly on the collage's bottom edge (H − 4.5vh, same as outerGap below)
+          if (h > 0 && topPx + h < H * 0.955) {
+            const lh = Math.min(1.3, 1.14 * ((H * 0.955 - topPx) / h));
+            ch.style.lineHeight = lh.toFixed(4);
+          }
         }
       }
 
@@ -1011,12 +977,44 @@ export default function CaracasHero({
     };
   }, []);
 
+  // pink marker sweep behind "suntem?" — fires once the heading rises into view
+  // (keyed on lang: the re-rendered heading loses the class, so re-arm it)
+  useEffect(() => {
+    const hd = headingRef.current;
+    if (!hd) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          hd.classList.add("cd-mark-on");
+          io.disconnect();
+        }
+      },
+      { threshold: 0.4 }
+    );
+    io.observe(hd);
+    return () => io.disconnect();
+  }, [lang]);
+
   // re-apply scroll-driven styles after a language change re-renders the DOM
   useEffect(() => {
     imgShownRef.current = []; // re-arm the collage pops for the re-rendered nodes
     forceRevealRef.current = true; // re-apply the reveal to the new char spans
     measureRef.current();
     updateRef.current();
+    // the other locale's glyph subsets (e.g. Cyrillic) may still be loading at this
+    // point, so the chunk auto-fit measured wrong metrics — re-measure once they land
+    let cancelled = false;
+    const remeasure = () => {
+      if (cancelled) return;
+      measureRef.current();
+      updateRef.current();
+    };
+    const t = setTimeout(remeasure, 150);
+    document.fonts?.ready.then(remeasure);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
   }, [lang]);
 
   const navRowText = { display: "flex", alignItems: "center" } as const;
@@ -1078,15 +1076,16 @@ export default function CaracasHero({
       }}
     >
       {/* readability scrim — black fade painted UNDER the header elements (zIndex:-1 keeps it
-          behind them but still above the page, since the nav is its own stacking context) */}
+          behind them but still above the page, since the nav is its own stacking context).
+          Kept SHORT: it must hug the header strip only, not fog the section below. */}
       <div
         style={{
           position: "absolute",
           left: 0,
           right: 0,
           top: 0,
-          height: "170px",
-          background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.26) 45%, rgba(0,0,0,0) 100%)",
+          height: "90px",
+          background: "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.18) 62%, rgba(0,0,0,0) 100%)",
           pointerEvents: "none",
           zIndex: -1,
         }}
@@ -1100,26 +1099,22 @@ export default function CaracasHero({
             setMenuOpen(false);
             goTo(0);
           }}
-          style={{ height: "34px", width: "auto", display: "block", cursor: "pointer", filter: "brightness(0) invert(1)" }}
+          style={{ height: "34px", width: "auto", display: "block", cursor: "pointer" }}
         />
-        {/* the SAME button opens and closes the sheet — the header never changes, only the
-            icon flips ☰ ↔ ✕ (reference behaviour: the page slides under the static header) */}
+        {/* the SAME button opens and closes the sheet — the header never changes, only
+            the icon MORPHS ☰ → ✕ (two bars rotating, .cd-burger in globals.css) */}
         <button
+          className="cd-menu-btn"
           onClick={() => setMenuOpen((o) => !o)}
           aria-label={t.nav.menu}
           aria-expanded={menuOpen}
-          style={{ ...navRowText, appearance: "none", border: 0, background: "transparent", padding: 0, gap: "10px", cursor: "pointer", fontFamily: FONT, fontSize: "11px", fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.92)" }}
+          style={{ ...navRowText, appearance: "none", border: 0, background: "transparent", padding: 0, gap: "10px", cursor: "pointer", fontFamily: FONT, fontSize: "12px", fontWeight: 500, letterSpacing: "0.04em", color: "rgba(255,255,255,0.92)" }}
         >
           {t.nav.menu}
-          {menuOpen ? (
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
-          ) : (
-            <svg width="17" height="11" viewBox="0 0 18 12" fill="none">
-              <path d="M1 3.5h16M1 8.5h16" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-            </svg>
-          )}
+          <span className={`cd-burger${menuOpen ? " cd-burger--x" : ""}`} aria-hidden>
+            <span />
+            <span />
+          </span>
         </button>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: "26px", color: "#ffffff" }}>
@@ -1148,9 +1143,10 @@ export default function CaracasHero({
             </button>
           ))}
         </div>
-        {/* Contact — EXACTLY the hero CTA design: solid #dad3d1 rectangle (3px), dark text,
-            plain ↗ arrow. Static colors in every header state (no --btn-bg/--btn-fg vars). */}
+        {/* Contact — EXACTLY the hero CTA design: solid rectangle (3px), plain ↗ arrow —
+            now brand PINK w/ white text (.cd-btn-pink; hover floods white). */}
         <button
+          className="cd-btn-pink"
           onClick={() => {
             setMenuOpen(false);
             goTo(document.documentElement.scrollHeight);
@@ -1162,8 +1158,6 @@ export default function CaracasHero({
             display: "inline-flex",
             alignItems: "center",
             gap: "12px",
-            background: "#dad3d1",
-            color: "#161516",
             borderRadius: "3px",
             padding: "11px 20px",
             marginLeft: "2px",
@@ -1176,7 +1170,7 @@ export default function CaracasHero({
         >
           {t.nav.contact}
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ flex: "none" }}>
-            <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="#161516" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
       </div>
@@ -1195,8 +1189,10 @@ export default function CaracasHero({
         position: "fixed",
         inset: 0,
         zIndex: 90,
-        background: "linear-gradient(158deg,#161d21 0%,#0d1114 58%,#0a0d10 100%)",
-        color: "#eef1f2",
+        // brand-pink sheet (per user) — coral like the footer, deepening toward the
+        // bottom-right so the white content keeps its contrast
+        background: "linear-gradient(158deg,#f0808e 0%,#eb7180 48%,#d95a6b 100%)",
+        color: "#ffffff",
         transform: menuOpen ? "translateY(0)" : "translateY(-100%)",
         pointerEvents: menuOpen ? "auto" : "none",
         transition: "transform 0.9s cubic-bezier(0.16,1,0.3,1)",
@@ -1276,7 +1272,7 @@ export default function CaracasHero({
               {t.nav.services}:
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "clamp(12px,1.4vw,24px)", marginTop: "clamp(14px,3vh,30px)" }}>
-              {t.services.steps.map((s, i) => (
+              {t.services.cards.slice(1).map((name, i) => (
                 <button
                   key={i}
                   className="cd-menu-card"
@@ -1285,10 +1281,10 @@ export default function CaracasHero({
                 >
                   <div style={{ width: "100%", height: "clamp(110px,26vh,250px)", overflow: "hidden", background: "#1b2126" }}>
                     {/* eslint-disable-next-line @next/next/no-img-element -- menu mock-up card */}
-                    <img src={MENU_SERVICE_IMAGES[i]} alt={s.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: "grayscale(1)" }} />
+                    <img src={MENU_SERVICE_IMAGES[i]} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", filter: "grayscale(1)" }} />
                   </div>
                   <div style={{ fontFamily: FONT, fontSize: "clamp(13px,1.05vw,17px)", fontWeight: 400, letterSpacing: "-0.01em", color: "#eef1f2", marginTop: "10px" }}>
-                    {s.name}
+                    {name}
                   </div>
                 </button>
               ))}
@@ -1473,6 +1469,7 @@ export default function CaracasHero({
                 {t.hero.sub}
               </p>
               <button
+                className="cd-btn-pink"
                 onClick={() => goTo(document.documentElement.scrollHeight)}
                 style={{
                   pointerEvents: "auto",
@@ -1482,8 +1479,6 @@ export default function CaracasHero({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "12px",
-                  background: "#dad3d1",
-                  color: "#161516",
                   borderRadius: "3px",
                   padding: "11px 20px",
                   fontFamily: FONT,
@@ -1495,7 +1490,7 @@ export default function CaracasHero({
               >
                 {t.book}
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ flex: "none" }}>
-                  <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="#161516" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             </div>
@@ -1541,7 +1536,7 @@ export default function CaracasHero({
                 }}
               >
                 {t.goalTitle.split(" ")[0]}{" "}
-                <span style={{ fontFamily: serifFont, fontStyle: "italic", fontWeight: 500, fontSize: "1.08em", lineHeight: 0.8, WebkitTextStrokeWidth: "0.017em", WebkitTextStrokeColor: "currentcolor" }}>
+                <span className="cd-mark-wrap" style={{ fontFamily: serifFont, fontStyle: "italic", fontWeight: 500, fontSize: "1.08em", lineHeight: 0.8, WebkitTextStrokeWidth: "0.017em", WebkitTextStrokeColor: "currentcolor" }}>
                   {t.goalTitle.split(" ").slice(1).join(" ")}
                 </span>
               </div>
@@ -1633,41 +1628,18 @@ export default function CaracasHero({
               >
                 {paragraphNodes}
               </div>
-              {/* "Mai multe" — placeholder for the full company story (hero-CTA geometry,
-                  coral fill so it reads on the white panel). */}
-              <button
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  bottom: "2.5%",
-                  appearance: "none",
-                  border: 0,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  background: ACCENT,
-                  color: "#ffffff",
-                  borderRadius: "3px",
-                  padding: "11px 20px",
-                  fontFamily: FONT,
-                  fontSize: "1.04vw",
-                  fontWeight: 400,
-                  letterSpacing: "-0.03em",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {t.aboutMore}
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ flex: "none" }}>
-                  <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
+              {/* "Mai multe" button removed — it floated in leftover space aligned to
+                  nothing; the paragraph now fills the column to the collage's bottom edge. */}
             </div>
           </div>
         </div>
 
       </div>
     </div>
+
+    {/* ── CE OFERIM — LAVA-style static services section (photo cards + dark list),
+        straight after "Cine suntem?" per user's ordering. ── */}
+    <ServicesSection title={t.services.title} cards={t.services.cards} list={t.services.list} serif={serifFont} />
 
     {/* ── ECHIPA NOASTRĂ — its OWN section you scroll down into. Its Dr. 1 image is handed
         off from the Scopul collage (pinned & grown in by the scroll driver above via
@@ -1722,9 +1694,6 @@ export default function CaracasHero({
         </button>
       </div>
     </section>
-
-    {/* ── CE OFERIM — pinned "what we offer" scroll-through of services ── */}
-    <ServicesSection title={t.services.title} intro={t.services.intro} steps={t.services.steps} serif={serifFont} />
 
     {/* ── DRUMUL TĂU — free-consultation path as a vertical timeline → CTA ── */}
     <ConsultationTimeline

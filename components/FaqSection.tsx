@@ -28,7 +28,7 @@ export default function FaqSection({ faq, serif }: { faq: FaqCopy; serif: string
   const [open, setOpen] = useState(0);
 
   return (
-    <section id="faq" style={{ position: "relative", background: "#ffffff", padding: "clamp(80px,14vh,150px) 0 clamp(120px,20vh,220px)" }}>
+    <section id="faq" style={{ position: "relative", background: "#fdf0f2", padding: "clamp(80px,14vh,150px) 0 clamp(120px,20vh,220px)" }}>
       {/* ── header: coral eyebrow + big serif title (matches the other sections) ── */}
       <div style={{ textAlign: "center", padding: "0 6%", marginBottom: "clamp(48px,8vh,92px)" }}>
         <div
