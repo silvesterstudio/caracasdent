@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useLenis } from "lenis/react";
 
 /**
  * SiteFooter — the coral footer rises within its own dark section: pulled up
@@ -32,8 +31,6 @@ type FooterCopy = {
   phone: string;
   message: string;
   submit: string;
-  clinicTitle: string;
-  clinicLinks: { label: string; target: string }[];
   contactTitle: string;
   address: string;
   contactEmail: string;
@@ -112,31 +109,6 @@ export default function SiteFooter({ footer, serif }: { footer: FooterCopy; seri
     };
   }, []);
 
-  // Lenis-aware link scrolling (mirrors CaracasHero's goTo): "top" / "footer" /
-  // a section selector. Falls back to native smooth scroll without Lenis.
-  const lenis = useLenis();
-  const goTo = (target: string) => {
-    if (target === "top" || target === "footer") {
-      const y = target === "top" ? 0 : document.documentElement.scrollHeight;
-      if (lenis && typeof lenis.scrollTo === "function") lenis.scrollTo(y, { force: true });
-      else window.scrollTo({ top: y, behavior: "smooth" });
-      return;
-    }
-    if (target === "cine") {
-      // "Despre noi": the Cine suntem panel is fully risen exactly one viewport
-      // above the services section (the hero root ends where #servicii begins)
-      const sv = document.querySelector("#servicii") as HTMLElement | null;
-      if (!sv) return;
-      const y = sv.getBoundingClientRect().top + window.scrollY - window.innerHeight;
-      if (lenis && typeof lenis.scrollTo === "function") lenis.scrollTo(y, { force: true });
-      else window.scrollTo({ top: y, behavior: "smooth" });
-      return;
-    }
-    const el = document.querySelector(target) as HTMLElement | null;
-    if (!el) return;
-    if (lenis && typeof lenis.scrollTo === "function") lenis.scrollTo(el, { offset: -64, force: true });
-    else window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: "smooth" });
-  };
 
   const inputStyle: React.CSSProperties = {
     appearance: "none",
@@ -159,21 +131,6 @@ export default function SiteFooter({ footer, serif }: { footer: FooterCopy; seri
     margin: "0 0 clamp(24px,3vh,40px)",
   };
 
-  // a link/label styled as a footer nav item
-  const linkBtn: React.CSSProperties = {
-    appearance: "none",
-    border: 0,
-    background: "transparent",
-    padding: 0,
-    textAlign: "left",
-    cursor: "pointer",
-    fontFamily: FONT,
-    fontSize: "clamp(17px,1.35vw,22px)",
-    fontWeight: 600,
-    letterSpacing: "-0.01em",
-    color: LIGHT,
-  };
-
   return (
     // the footer sits DIRECTLY under the timeline, pulled up by just the dome
     // height so its curved top overlaps the timeline's dark tail (the cut
@@ -189,9 +146,9 @@ export default function SiteFooter({ footer, serif }: { footer: FooterCopy; seri
         borderTopLeftRadius: "50% 130px",
         borderTopRightRadius: "50% 130px",
         willChange: "border-radius",
-        // just enough top padding to clear the domed edge — a bigger cushion here
-        // pushed the logo way too far down (per user)
-        padding: `calc(clamp(8px,1.5vh,20px) + ${DOME}px) 5% clamp(30px,5vh,60px)`,
+        // the dome only dips at the SIDES — the centered logo can sit well inside
+        // the dome strip, so only half the dome height of top padding is needed
+        padding: `${DOME * 0.5}px 5% clamp(30px,5vh,60px)`,
         display: "flex",
         flexDirection: "column",
       }}
@@ -220,8 +177,9 @@ export default function SiteFooter({ footer, serif }: { footer: FooterCopy; seri
         />
       </div>
 
-      {/* form title (the aventura "Book a call." voice) + radios + contact form */}
-      <div style={{ maxWidth: "820px", margin: "0 auto", width: "100%" }}>
+      {/* form title + call line + the patient/contact form — "Formular pacient"
+          and Contact links land HERE (#formular), not at the page bottom */}
+      <div id="formular" style={{ maxWidth: "820px", margin: "0 auto", width: "100%" }}>
         <h2
           style={{
             fontFamily: serif,
@@ -320,21 +278,8 @@ export default function SiteFooter({ footer, serif }: { footer: FooterCopy; seri
         </div>
       </div>
 
-      {/* ── lower block: Clinica · contact/orar/motto ── */}
-      <div className="cd-foot-cols" style={{ width: "100%", marginTop: "clamp(64px,12vh,150px)" }}>
-        {/* Clinica — nav links */}
-        <div>
-          <div style={colTitle}>{footer.clinicTitle}</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "clamp(12px,1.6vh,20px)", alignItems: "flex-start" }}>
-            {footer.clinicLinks.map((l, i) => (
-              <button key={i} onClick={() => goTo(l.target)} style={linkBtn}>
-                <Roll text={l.label} />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Contact / Orar / Motto — the clinic's real details (one location) */}
+      {/* ── lower block: contact · orar · motto — the clinic's real details ── */}
+      <div style={{ width: "100%", marginTop: "clamp(64px,12vh,150px)" }}>
         <div>
           <div className="cd-foot-locs">
             {/* Detalii de contact */}
@@ -352,7 +297,7 @@ export default function SiteFooter({ footer, serif }: { footer: FooterCopy; seri
               <br />
               <a
                 href={`mailto:${footer.contactEmail}`}
-                style={{ fontFamily: FONT, fontSize: "clamp(13px,0.95vw,15px)", fontWeight: 500, color: MUTED, display: "inline-block", marginBottom: "clamp(14px,2vh,24px)" }}
+                style={{ fontFamily: FONT, fontSize: "clamp(13px,0.95vw,15px)", fontWeight: 500, color: LIGHT, display: "inline-block", marginBottom: "clamp(14px,2vh,24px)" }}
               >
                 {footer.contactEmail}
               </a>

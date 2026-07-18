@@ -145,9 +145,7 @@ type Copy = {
     phone: string;
     message: string;
     submit: string;
-    // lower footer (columns + bottom bar)
-    clinicTitle: string;
-    clinicLinks: { label: string; target: string }[];
+    // lower footer (contact/orar/motto + bottom bar)
     contactTitle: string;
     address: string;
     contactEmail: string;
@@ -341,16 +339,6 @@ const COPY: Record<"ro" | "ru", Copy> = {
       phone: "Telefon*",
       message: "Cu ce vă putem ajuta?*",
       submit: "Trimite",
-      clinicTitle: "Clinica",
-      clinicLinks: [
-        { label: "Acasă", target: "top" },
-        { label: "Despre noi", target: "cine" },
-        { label: "Servicii", target: "#servicii" },
-        { label: "Echipa noastră", target: "#echipa" },
-        { label: "Rezultate", target: "#rezultate" },
-        { label: "Drumul tău", target: "#drumul" },
-        { label: "Contact", target: "footer" },
-      ],
       contactTitle: "Detalii de contact",
       address: "str. Gheorghe Asachi 65, Chișinău",
       contactEmail: "info@caracas.md",
@@ -626,16 +614,6 @@ const COPY: Record<"ro" | "ru", Copy> = {
       phone: "Телефон*",
       message: "Чем мы можем вам помочь?*",
       submit: "Отправить",
-      clinicTitle: "Клиника",
-      clinicLinks: [
-        { label: "Главная", target: "top" },
-        { label: "О нас", target: "cine" },
-        { label: "Услуги", target: "#servicii" },
-        { label: "Наша команда", target: "#echipa" },
-        { label: "Результаты", target: "#rezultate" },
-        { label: "Ваш путь", target: "#drumul" },
-        { label: "Контакты", target: "footer" },
-      ],
       contactTitle: "Контакты",
       address: "ул. Георге Асаки 65, Кишинёв",
       contactEmail: "info@caracas.md",
@@ -1323,7 +1301,7 @@ export default function CaracasHero({
     // restarts it after the re-render, which is too late for the scroll below
     if (lenis) lenis.start();
     if (target === "top") goTo(0);
-    else if (target === "footer") goTo(document.documentElement.scrollHeight);
+    else if (target === "footer") goTo("#formular"); // the footer FORM, not the page's last pixel
     else if (target === "cine") {
       // "Despre noi": the Cine suntem panel is fully risen at the END of the hero
       // scrub (p=1), i.e. one viewport above the hero root's bottom edge
@@ -1439,7 +1417,7 @@ export default function CaracasHero({
           className="cd-btn-pink"
           onClick={() => {
             setMenuOpen(false);
-            goTo(document.documentElement.scrollHeight);
+            goTo("#formular");
           }}
           style={{
             appearance: "none",
@@ -1760,7 +1738,7 @@ export default function CaracasHero({
               </p>
               <button
                 className="cd-btn-pink"
-                onClick={() => goTo(document.documentElement.scrollHeight)}
+                onClick={() => goTo("#formular")}
                 style={{
                   pointerEvents: "auto",
                   appearance: "none",

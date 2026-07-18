@@ -293,13 +293,8 @@ a:hover {
   }
 }
 
-/* ── FOOTER lower block: Clinica links + contact/orar/motto cells + bottom bar ── */
-.cd-foot-cols {
-  display: grid;
-  grid-template-columns: 1fr 3.4fr;
-  gap: clamp(28px, 4vw, 80px);
-}
-/* middle cell (Orarul săptămânii) gets extra width so every schedule row —
+/* ── FOOTER lower block: contact/orar/motto cells + bottom bar ──
+   middle cell (Orarul săptămânii) gets extra width so every schedule row —
    "Luni – Vineri  8:00 – 19:00" — fits on ONE line */
 .cd-foot-locs {
   display: grid;
@@ -363,13 +358,7 @@ button:hover > .cd-roll > span,
 .cd-foot-social:hover {
   background: rgba(253, 240, 242, 0.3) !important;
 }
-@media (max-width: 900px) {
-  .cd-foot-cols {
-    grid-template-columns: 1fr;
-  }
-}
 @media (max-width: 560px) {
-  .cd-foot-cols,
   .cd-foot-locs {
     grid-template-columns: 1fr;
   }
