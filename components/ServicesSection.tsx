@@ -21,7 +21,7 @@ import ImageSlot from "./ImageSlot";
 const LIGHT = "#fdf0f2"; // the site-wide soft blush surface (per user)
 const INK = "#1c2b30"; // brand ink (title, card ground)
 const CORAL = "#eb7180"; // the 06–10 block sits on the brand pink (like the footer)
-const CARD_TEXT = "#ffffff";
+const CARD_TEXT = "#fdf0f2";
 const ACCENT = "#eb7180";
 const FONT = "var(--sans)";
 const IMG_BG = "#dbe3e3";
@@ -241,13 +241,13 @@ export default function ServicesSection({
               gridTemplateColumns: "1fr 1fr 1fr",
               alignItems: "center",
               padding: "clamp(12px, 1.8vw, 26px) 0",
-              borderTop: i === 0 ? "1px solid rgba(255,255,255,0.35)" : undefined,
-              borderBottom: "1px solid rgba(255,255,255,0.35)",
+              borderTop: i === 0 ? "1px solid rgba(253,240,242,0.35)" : undefined,
+              borderBottom: "1px solid rgba(253,240,242,0.35)",
               cursor: "pointer",
             }}
           >
-            <div style={{ ...nrStyle, color: "#ffffff" }}>0{i + 6}</div>
-            <h3 style={{ ...cardTitleStyle, color: "#ffffff", whiteSpace: "nowrap" }}>{item.name}</h3>
+            <div style={{ ...nrStyle, color: "#fdf0f2" }}>0{i + 6}</div>
+            <h3 style={{ ...cardTitleStyle, color: "#fdf0f2", whiteSpace: "nowrap" }}>{item.name}</h3>
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
               <ArrowCircle />
             </div>

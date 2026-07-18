@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
+import { useLenis } from "lenis/react";
 import ImageSlot from "./ImageSlot";
 
 /**
  * EchipaSection — the team, as its OWN 300vh scroll section (a pinned 100vh viewport).
  * Layout is an exact copy of the aventuradentalarts.com "Our Solutions" services
  * section, translated into the site's design system (Inter Tight + PP Editorial
- * New) — on a DEEP-ROSE sheet (dark rosewood gradient — the aventura dark mood
- * translated into the site's pink family); blush-white text, coral accent:
+ * New) — on a SMOKED-TAUPE-ROSE sheet (greyed-rose gradient — the aventura dark
+ * mood as an almost-neutral warm charcoal); blush-white text, coral accent:
  *   • LEFT  — full-height COLOR doctor portrait (x0 → 50vw), wipes Dr.1 → 2 → 3 from
  *     the bottom; each incoming image ZOOM-SETTLES 120% → 100%. No bottom scrim —
  *     the photo keeps its full height (per user; the old ink fade made the dark
@@ -17,17 +18,17 @@ import ImageSlot from "./ImageSlot";
  *     overlapping lines (lh 0.85, ~10vw) hugging the bottom — Inter Tight 500
  *     for every word (no italic, no marker), per user.
  *   • bottom-left — "Echipa noastră:" + the three doctors as an index (active = ink).
- *   • RIGHT column (x 70.8%, w 26.9%, like the reference) — muted kicker
- *     (specialitate) → BOLD lead paragraph (bio) → color candid photo beside a
- *     hairlined, coral-arrowed list of that doctor's services.
- *   • bottom-right — the site's coral CTA (hero "Mai multe"/"Contactează-ne"
- *     geometry: 3px radius, 11/20px padding, ↗ arrow).
+ *   • RIGHT column (x 70.8%, w 26.9%, top 13% — screenshot voice, far-right) —
+ *     BIG semibold white lead (bio) → color candid photo beside a hairlined,
+ *     white-arrowed list of that doctor's services; each row opens the
+ *     service bottom-sheet. (The bottom-right "Programează-te" CTA was
+ *     removed per user, 2026-07-17.)
  * Only two typefaces: Inter Tight (FONT) + the editorial serif passed in.
  * `dr1Ref` is kept for the component interface (the old Scopul hand-off plumbing).
  */
 
-// DEEP-ROSE theme (per user — the aventura dark mood, but in the site's pink
-// family instead of near-black): dark rosewood surface, blush-white text, coral accent.
+// INK theme (per user — flat #161516, matching the timeline/footer ink):
+// dark surface, blush text, coral accent.
 const TEXT = "#fdf0f2"; // the site's blush as the LIGHT text color
 const MUTED = "rgba(253,240,242,0.62)";
 const FAINT = "rgba(253,240,242,0.40)";
@@ -36,38 +37,68 @@ const ACCENT = "#eb7180";
 const IMG_BG = "#dbe3e3"; // same neutral as the "Cine suntem?" collage placeholders
 const FONT = "var(--sans)";
 
-// dark PLUM-MAUVE (pink undertone, deliberately NOT red/burgundy — per user)
-const ROSE_DEEP = "#2a1b26"; // darkest corner of the sheet
-const BG = "linear-gradient(158deg,#453043 0%,#372534 55%,#2a1b26 100%)";
+// SITE INK (per user, 2026-07-17 — replaced the smoked-taupe-rose gradient): a
+// flat #161516, the same ink as the "Drumul tău" timeline, so the team section
+// reads as the same dark surface. ROSE_DEEP/BG names kept to avoid churn.
+const ROSE_DEEP = "#161516"; // solid surface (also the portrait backing)
+const BG = "#161516";
 
 
 const cl = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
 const sm = (x: number, a: number, b: number) => cl((x - a) / (b - a));
 
+// one service: row name + the copy shown in the bottom-sheet popup (mirrors
+// ServiceItem in CaracasHero — kept local to avoid an import cycle)
+type Svc = { name: string; desc: string; points: string[] };
+
 type Doctor = {
   name: [string, string];
   spec: string;
   bio: string;
-  services: [string, string, string, string];
+  services: [Svc, Svc, Svc, Svc];
 };
 
 export default function EchipaSection({
   doctors,
   photos,
   candids,
-  book,
   serif,
   dr1Ref,
 }: {
   doctors: [Doctor, Doctor, Doctor];
   photos: string[]; // per-doctor portrait
   candids: string[]; // per-doctor secondary "at work" shot for the right column
-  book: string;
   serif: string;
   dr1Ref: RefObject<HTMLDivElement>;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const imgBRef = useRef<HTMLDivElement>(null);
+  // ── bottom-sheet popup for a doctor's service (same pattern as ServicesSection:
+  //    the item persists while the sheet slides OUT, so content doesn't blank) ──
+  const [sheetItem, setSheetItem] = useState<{ nr: string; item: Svc } | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const openSheet = (nr: string, item: Svc) => {
+    setSheetItem({ nr, item });
+    setSheetOpen(true);
+  };
+  const closeSheet = () => setSheetOpen(false);
+
+  // freeze the (Lenis) page scroll while the sheet is open; Escape closes it
+  const lenis = useLenis();
+  useEffect(() => {
+    if (!lenis) return;
+    if (sheetOpen) lenis.stop();
+    else lenis.start();
+    return () => lenis.start();
+  }, [sheetOpen, lenis]);
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeSheet();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [sheetOpen]);
   const imgCRef = useRef<HTMLDivElement>(null);
   const imgBScaleRef = useRef<HTMLDivElement>(null);
   const imgCScaleRef = useRef<HTMLDivElement>(null);
@@ -98,13 +129,19 @@ export default function EchipaSection({
       let p = total > 0 ? (y - rootTop) / total : 0;
       p = cl(p);
 
-      const w1 = cl((p - 0.16) / 0.24); // doctor 2 wipes in
-      const w2 = cl((p - 0.58) / 0.24); // doctor 3 wipes in
+      // back-to-back wipes (no dead scroll between them — per user, "fluid"):
+      // hold Dr.1 to 0.10, wipe 2 in over 0.10–0.45, wipe 3 in over 0.45–0.80,
+      // hold Dr.3 for the rest.
+      const w1 = cl((p - 0.1) / 0.35); // doctor 2 wipes in
+      const w2 = cl((p - 0.45) / 0.35); // doctor 3 wipes in
       // wipe = clip-path reveal from the bottom; the incoming image ZOOM-SETTLES 120% → 100%.
       if (imgBRef.current) imgBRef.current.style.clipPath = "inset(" + ((1 - w1) * 100).toFixed(2) + "% 0px 0px 0px)";
       if (imgCRef.current) imgCRef.current.style.clipPath = "inset(" + ((1 - w2) * 100).toFixed(2) + "% 0px 0px 0px)";
-      if (imgBScaleRef.current) imgBScaleRef.current.style.transform = "scale(" + (1.2 - 0.2 * w1).toFixed(4) + ")";
-      if (imgCScaleRef.current) imgCScaleRef.current.style.transform = "scale(" + (1.2 - 0.2 * w2).toFixed(4) + ")";
+      // settle to 1.01 (not 1.0): at exactly 1.0 subpixel rounding can leave a
+      // light hairline of the slot background at the photo's right edge (= the
+      // window midline); the 1% overscan keeps the image covering its box.
+      if (imgBScaleRef.current) imgBScaleRef.current.style.transform = "scale(" + (1.2 - 0.19 * w1).toFixed(4) + ")";
+      if (imgCScaleRef.current) imgCScaleRef.current.style.transform = "scale(" + (1.2 - 0.19 * w2).toFixed(4) + ")";
 
       const oA = 1 - sm(w1, 0.4, 0.6);
       const oB = sm(w1, 0.4, 0.6) * (1 - sm(w2, 0.4, 0.6));
@@ -161,17 +198,20 @@ export default function EchipaSection({
             would leave the dark half a scrollbar-width wider than the photo (the
             width-world gotcha — same fix as the hero's video insets) */}
         <div style={{ position: "absolute", left: 0, top: 0, width: "50vw", height: "100%", overflow: "hidden", zIndex: 1 }}>
-          <div ref={dr1Ref} style={{ position: "absolute", inset: 0, zIndex: 1, background: IMG_BG }}>
-            <ImageSlot bg={IMG_BG} src={photos[0]} label={doctors[0].name.join(" ")} />
+          {/* portrait layers back onto the DARK sheet color (not the light collage
+              neutral) — a light backing is what read as the "white line" when a
+              settled image rounded a subpixel short of its box */}
+          <div ref={dr1Ref} style={{ position: "absolute", inset: 0, zIndex: 1, background: ROSE_DEEP }}>
+            <ImageSlot bg={ROSE_DEEP} dark src={photos[0]} label={doctors[0].name.join(" ")} style={{ transform: "scale(1.01)" }} />
           </div>
-          <div ref={imgBRef} style={{ position: "absolute", inset: 0, zIndex: 2, background: IMG_BG, overflow: "hidden", clipPath: "inset(100% 0px 0px 0px)" }}>
+          <div ref={imgBRef} style={{ position: "absolute", inset: 0, zIndex: 2, background: ROSE_DEEP, overflow: "hidden", clipPath: "inset(100% 0px 0px 0px)" }}>
             <div ref={imgBScaleRef} style={{ width: "100%", height: "100%", transform: "scale(1.2)", willChange: "transform" }}>
-              <ImageSlot bg={IMG_BG} src={photos[1]} label={doctors[1].name.join(" ")} />
+              <ImageSlot bg={ROSE_DEEP} dark src={photos[1]} label={doctors[1].name.join(" ")} />
             </div>
           </div>
-          <div ref={imgCRef} style={{ position: "absolute", inset: 0, zIndex: 3, background: IMG_BG, overflow: "hidden", clipPath: "inset(100% 0px 0px 0px)" }}>
+          <div ref={imgCRef} style={{ position: "absolute", inset: 0, zIndex: 3, background: ROSE_DEEP, overflow: "hidden", clipPath: "inset(100% 0px 0px 0px)" }}>
             <div ref={imgCScaleRef} style={{ width: "100%", height: "100%", transform: "scale(1.2)", willChange: "transform" }}>
-              <ImageSlot bg={IMG_BG} src={photos[2]} label={doctors[2].name.join(" ")} />
+              <ImageSlot bg={ROSE_DEEP} dark src={photos[2]} label={doctors[2].name.join(" ")} />
             </div>
           </div>
         </div>
@@ -201,7 +241,7 @@ export default function EchipaSection({
                 fontSize: "clamp(48px, 7.5vw, 156px)",
                 lineHeight: 0.85,
                 letterSpacing: "-0.03em",
-                color: "#ffffff",
+                color: "#fdf0f2",
                 pointerEvents: "none",
               }}
             >
@@ -214,11 +254,11 @@ export default function EchipaSection({
                 Reference: ~0.85-0.9vw regular, active pure white, ~42px air under the
                 label, block ending ~4.5% from the bottom. */}
             {/* bottom-left INDEX — on the site's 4% grid; the ACTIVE doctor reads coral */}
-            <div style={{ position: "absolute", left: "4%", bottom: "4.5%", zIndex: 3, pointerEvents: "none", textShadow: "0 1px 3px rgba(46,22,28,0.55), 0 2px 18px rgba(46,22,28,0.5)" }}>
-              <div style={{ fontFamily: FONT, fontSize: "clamp(13px,0.85vw,17px)", fontWeight: 400, color: MUTED, marginBottom: "clamp(24px,4.5vh,46px)" }}>
+            <div style={{ position: "absolute", left: "4%", bottom: "4.5%", zIndex: 3, pointerEvents: "none" }}>
+              <div style={{ fontFamily: FONT, fontSize: "clamp(13px,0.85vw,17px)", fontWeight: 400, color: MUTED, marginBottom: "clamp(10px,1.8vh,20px)" }}>
                 Echipa noastră:
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0px" }}>
                 {doctors.map((d, di) => (
                   <div
                     key={di}
@@ -226,8 +266,8 @@ export default function EchipaSection({
                       fontFamily: FONT,
                       fontSize: "clamp(13px,0.9vw,18px)",
                       fontWeight: di === idx ? 600 : 400,
-                      lineHeight: 1.35,
-                      color: di === idx ? "#ffffff" : FAINT, // coral melts on the pink surface
+                      lineHeight: 1.25,
+                      color: di === idx ? "#fdf0f2" : FAINT, // coral melts on the pink surface
                       transition: "color 0.3s ease",
                     }}
                   >
@@ -237,36 +277,30 @@ export default function EchipaSection({
               </div>
             </div>
 
-            {/* RIGHT column — the reference's exact geometry (x 70.8%, w 26.9%):
-                muted kicker → BOLD lead → color candid + hairlined services list.
-                (Top nudged below the fixed header; the reference has no header there.) */}
-            <div style={{ position: "absolute", left: "70.8%", top: "8.5%", width: "26.9%", zIndex: 4, display: "flex", flexDirection: "column" }}>
-              {/* specialty as the SITE's eyebrow (FAQ pattern: coral, uppercase, spaced) */}
-              <div style={{ fontFamily: FONT, fontSize: "clamp(11px,0.8vw,13px)", fontWeight: 800, letterSpacing: "0.2em", textTransform: "uppercase", color: "#ffffff" }}>
-                {doc.spec}
-              </div>
-              {/* bio — light and airy for the blush surface (the old 600/1.28 + 11vh
-                  gap was the dark reference's voice) */}
+            {/* RIGHT column — back at the far right (x 70.8%, w 26.9%, per user),
+                keeping the screenshot's voice scaled to the narrow column: semibold
+                white lead, generous air, then candid photo + services list. */}
+            <div style={{ position: "absolute", left: "70.8%", top: "13%", width: "26.9%", zIndex: 4, display: "flex", flexDirection: "column" }}>
+              {/* bio — the screenshot's bold white headline voice */}
               <div
                 style={{
                   fontFamily: FONT,
-                  fontSize: "clamp(15px, 1.2vw, 24px)",
-                  fontWeight: 400,
-                  lineHeight: 1.5,
-                  letterSpacing: "-0.01em",
-                  color: "rgba(253,240,242,0.82)",
-                  marginTop: "clamp(20px,4vh,44px)",
+                  fontSize: "clamp(16px, 1.4vw, 27px)",
+                  fontWeight: 600,
+                  lineHeight: 1.3,
+                  letterSpacing: "-0.015em",
+                  color: "rgba(253,240,242,0.93)",
                 }}
               >
                 {doc.bio}
               </div>
-              {/* candid row sits CLOSE under the lead (~1.6vh in the reference),
-                  with a wide ~2.2vw gutter between the photo and the list */}
-              <div style={{ display: "flex", gap: "clamp(16px,2.2vw,46px)", alignItems: "flex-start", marginTop: "clamp(12px,1.8vh,22px)" }}>
+              {/* candid row sits WELL below the lead (screenshot has generous air),
+                  with a wide gutter between the photo and the list */}
+              <div style={{ display: "flex", gap: "clamp(16px,2.2vw,46px)", alignItems: "flex-start", marginTop: "clamp(22px,4vh,52px)" }}>
                 {/* candid stays COLOR (like the reference) — tall 2:3, sharp corners */}
                 <div
                   style={{
-                    width: "42%",
+                    width: "44%",
                     minWidth: "120px",
                     aspectRatio: "2 / 3",
                     overflow: "hidden",
@@ -276,24 +310,30 @@ export default function EchipaSection({
                 >
                   <ImageSlot bg={IMG_BG} src={candids[idx]} label={`${doc.name[0]} ${doc.name[1]}`} />
                 </div>
-                {/* the doctor's services — hairlined rows with coral ↗ arrows */}
+                {/* the doctor's services — hairlined rows with ↗ arrows; each opens
+                    the service bottom-sheet (same pattern as ServicesSection) */}
                 <div style={{ flex: "1 1 0" }}>
                   {doc.services.map((s, si) => (
                     <div
                       key={si}
+                      onClick={() => openSheet(`0${si + 1}`, s)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === "Enter" && openSheet(`0${si + 1}`, s)}
                       style={{
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        gap: "12px",
-                        padding: "18px 0", // the reference's rows breathe (~19px vertical)
+                        gap: "14px",
+                        padding: "clamp(14px,2.2vh,22px) 0", // roomy rows, per the screenshot
                         borderTop: `1px solid ${LINE}`,
                         borderBottom: si === doc.services.length - 1 ? `1px solid ${LINE}` : undefined,
+                        cursor: "pointer",
                       }}
                     >
-                      <span style={{ fontFamily: FONT, fontSize: "clamp(13px,0.85vw,17px)", fontWeight: 400, lineHeight: 1.3, color: TEXT }}>{s}</span>
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flex: "none" }}>
-                        <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke={TEXT} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                      <span style={{ fontFamily: FONT, fontSize: "clamp(14px,0.95vw,18px)", fontWeight: 500, lineHeight: 1.3, color: "#fdf0f2" }}>{s.name}</span>
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flex: "none" }}>
+                        <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="#fdf0f2" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </div>
                   ))}
@@ -302,36 +342,109 @@ export default function EchipaSection({
             </div>
           </div>
         ))}
+      </div>
 
-        {/* ── CTA (bottom-right) — WHITE on the pink surface (a pink button would melt
-            into it); hovers to coral, on the 4% grid ── */}
-        <button
-          className="cd-btn-light"
-          style={{
-            position: "absolute",
-            right: "4%",
-            bottom: "4.5%",
-            appearance: "none",
-            border: 0,
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "12px",
-            borderRadius: "3px",
-            padding: "11px 20px",
-            fontFamily: FONT,
-            fontSize: "clamp(14px,1.04vw,17px)",
-            fontWeight: 400,
-            letterSpacing: "-0.03em",
-            whiteSpace: "nowrap",
-            zIndex: 12,
-          }}
-        >
-          {book}
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ flex: "none" }}>
-            <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+      {/* ── SERVICE SHEET — full-screen popup sliding UP from the bottom (the
+          ServicesSection pattern verbatim): blush surface, ink text ── */}
+      <div
+        aria-hidden={!sheetOpen}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 120, // above the fixed header — the sheet owns the viewport
+          background: "#fdf0f2",
+          color: "#1c2b30",
+          transform: sheetOpen ? "translateY(0)" : "translateY(100%)",
+          pointerEvents: sheetOpen ? "auto" : "none",
+          transition: "transform 0.9s cubic-bezier(0.16,1,0.3,1)",
+          willChange: "transform",
+          overflowY: "auto",
+          padding: "clamp(28px, 5vh, 60px) 4% clamp(50px, 8vh, 100px)",
+        }}
+      >
+        {sheetItem && (
+          <>
+            {/* top bar: number chip + close circle */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "clamp(36px, 8vh, 90px)" }}>
+              <div
+                style={{
+                  display: "inline-block",
+                  fontFamily: FONT,
+                  fontSize: "clamp(13px, 0.95vw, 17px)",
+                  fontWeight: 500,
+                  color: "#1c2b30",
+                  background: "rgba(28,43,48,0.07)",
+                  padding: "7px 12px",
+                  borderRadius: "2px",
+                }}
+              >
+                /{sheetItem.nr}
+              </div>
+              <button
+                onClick={closeSheet}
+                aria-label="Închide"
+                className="cd-btn-light cd-svc-circle"
+                style={{ appearance: "none", border: 0, cursor: "pointer", boxShadow: "inset 0 0 0 1px rgba(28,43,48,0.14)" }}
+              >
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{ flex: "none" }}>
+                  <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+
+            {/* service name — the site's heading voice */}
+            <h3
+              style={{
+                fontFamily: FONT,
+                fontWeight: 500,
+                fontSize: "clamp(38px, 5.3vw, 104px)",
+                lineHeight: 0.98,
+                letterSpacing: "-0.03em",
+                color: "#1c2b30",
+                margin: "0 0 clamp(20px, 4vh, 44px)",
+                maxWidth: "14ch",
+              }}
+            >
+              {sheetItem.item.name}
+            </h3>
+
+            {/* description */}
+            <p
+              style={{
+                fontFamily: FONT,
+                fontSize: "clamp(16px, 1.35vw, 24px)",
+                fontWeight: 400,
+                lineHeight: 1.5,
+                color: "rgba(28,43,48,0.78)",
+                margin: "0 0 clamp(28px, 6vh, 64px)",
+                maxWidth: "52ch",
+              }}
+            >
+              {sheetItem.item.desc}
+            </p>
+
+            {/* points — hairlined rows with a coral dot */}
+            <div style={{ maxWidth: "640px" }}>
+              {sheetItem.item.points.map((pt, pi) => (
+                <div
+                  key={pi}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "16px",
+                    padding: "clamp(13px, 2vh, 20px) 0",
+                    borderTop: "1px solid rgba(28,43,48,0.14)",
+                    borderBottom: pi === sheetItem.item.points.length - 1 ? "1px solid rgba(28,43,48,0.14)" : undefined,
+                  }}
+                >
+                  <span style={{ fontFamily: FONT, fontSize: "clamp(14px, 1.1vw, 19px)", fontWeight: 500, color: "#1c2b30" }}>{pt}</span>
+                  <span style={{ width: "7px", height: "7px", borderRadius: "999px", background: ACCENT, flex: "none" }} />
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

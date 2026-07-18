@@ -75,7 +75,7 @@ a:hover {
 
 ::selection {
   background: #fe7183;
-  color: #ffffff;
+  color: #fdf0f2;
 }
 
 /* expanded-menu hovers: big serif links + utility rows tint INK (the sheet is
@@ -105,11 +105,11 @@ a:hover {
    text, hover floods WHITE; the arrow (currentColor) nudges along its diagonal */
 .cd-btn-pink {
   background: #eb7180;
-  color: #ffffff;
+  color: #fdf0f2;
   transition: background 0.35s ease, color 0.35s ease;
 }
 .cd-btn-pink:hover {
-  background: #ffffff;
+  background: #fdf0f2;
   color: #161516;
 }
 .cd-btn-pink svg,
@@ -124,13 +124,13 @@ a:hover {
 /* white CTA (Echipa CTA + service arrow-circles): ink text on white, hover
    floods coral-pink */
 .cd-btn-light {
-  background: #ffffff;
+  background: #fdf0f2;
   color: #161516;
   transition: background 0.35s ease, color 0.35s ease;
 }
 .cd-btn-light:hover {
   background: #eb7180;
-  color: #ffffff;
+  color: #fdf0f2;
 }
 
 /* header menu icon — two bars that MORPH into a ✕ when the sheet is open, with a
@@ -216,7 +216,7 @@ a:hover {
 /* service circles do NOT change color on hover (per user) — instead the ↗ arrow
    rotates 45° to point RIGHT. Overrides the .cd-btn-light pink flood + nudge. */
 .cd-svc-circle:hover {
-  background: #ffffff;
+  background: #fdf0f2;
   color: #161516;
 }
 .cd-svc-circle svg {
@@ -224,6 +224,161 @@ a:hover {
 }
 .cd-svc-circle:hover svg {
   transform: rotate(45deg);
+}
+
+/* ── SHOWCASE (lavadental #showcase replica) ─────────────────────────────────
+   The section OVERLAPS the previous section by --cd-mask-h (negative margin)
+   and starts with that strip CLIPPED away; a pure-CSS scroll-driven animation
+   (view() timeline over the section's first 100vh of entry) un-clips the top
+   edge, so the section visually GROWS upward over the previous one while you
+   scroll down — measured off lavadental.lv (their .overlay-section).
+   Browsers without scroll-driven animations just get a normal, non-overlapped
+   section (same graceful fallback as the reference). */
+.cd-showcase-overlay {
+  --cd-mask-h: clamp(8rem, 7.2727rem + 3.2323vw, 10rem);
+}
+@supports (animation-timeline: scroll()) {
+  .cd-showcase-overlay {
+    margin-top: calc(var(--cd-mask-h) * -1);
+    clip-path: polygon(0 var(--cd-mask-h), 100% var(--cd-mask-h), 100% 100%, 0 100%);
+    animation: cd-section-overlay linear both;
+    animation-timeline: view();
+    animation-range: 0 100vh;
+    will-change: clip-path; /* keep the unmask on the compositor — no scroll jank */
+  }
+}
+@keyframes cd-section-overlay {
+  0% {
+    clip-path: polygon(0 var(--cd-mask-h), 100% var(--cd-mask-h), 100% 100%, 0 100%);
+  }
+  100% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+}
+/* the showcase title stays on ONE row (≥720px) — if the accent span wraps, its
+   pink marker ::before fragments into a broken vertical bar (the RU title bug) */
+@media (min-width: 720px) {
+  .cd-showcase-title {
+    white-space: nowrap;
+  }
+}
+
+/* the showcase grid: 3 columns, 1px seams, landscape 428/284 cells; the video
+   cell (.cd-showcase-tall) and every 8th-of-10 cell run 2 rows tall (428/568) —
+   lavadental's exact grid recipe */
+.cd-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+}
+.cd-showcase-grid > * {
+  overflow: clip;
+  aspect-ratio: 428 / 284;
+  max-width: 100%;
+  align-self: stretch;
+}
+.cd-showcase-grid > .cd-showcase-tall {
+  grid-row: span 2;
+  aspect-ratio: 428 / 568;
+}
+@media screen and (min-width: 720px) {
+  .cd-showcase-grid > *:nth-child(10n + 8) {
+    grid-row: span 2;
+    aspect-ratio: 428 / 568;
+  }
+}
+@media screen and (max-width: 719px) {
+  .cd-showcase-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── FOOTER lower block: Clinica links + contact/orar/motto cells + bottom bar ── */
+.cd-foot-cols {
+  display: grid;
+  grid-template-columns: 1fr 3.4fr;
+  gap: clamp(28px, 4vw, 80px);
+}
+/* middle cell (Orarul săptămânii) gets extra width so every schedule row —
+   "Luni – Vineri  8:00 – 19:00" — fits on ONE line */
+.cd-foot-locs {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr 1fr;
+  gap: clamp(20px, 2.4vw, 44px);
+}
+/* thin vertical seams between the location columns (the aventura reference) */
+.cd-foot-locs > * + * {
+  border-left: 1px solid rgba(253, 240, 242, 0.28);
+  padding-left: clamp(20px, 2.4vw, 44px);
+}
+.cd-foot-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px 40px;
+  flex-wrap: wrap;
+}
+.cd-foot-link {
+  transition: opacity 0.25s ease;
+}
+.cd-foot-link:hover {
+  opacity: 0.62;
+}
+/* the footer link hover: the label ROLLS UP and its clone rises from below */
+.cd-roll {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+}
+.cd-roll > span {
+  display: block;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cd-roll > span:last-child {
+  position: absolute;
+  left: 0;
+  top: 100%;
+}
+a:hover > .cd-roll > span,
+button:hover > .cd-roll > span,
+.cd-roll:hover > span {
+  transform: translateY(-100%);
+}
+
+/* footer form inputs — placeholders must be BLUSH, not the browser's default
+   grey (inline styles can't reach ::placeholder) */
+.cd-foot-input::placeholder {
+  color: rgba(253, 240, 242, 0.75);
+  opacity: 1; /* Firefox dims placeholders by default */
+}
+.cd-foot-input:focus {
+  border-color: rgba(253, 240, 242, 0.65) !important;
+}
+
+/* footer social circles — hover floods deeper blush */
+.cd-foot-social {
+  transition: background 0.35s ease;
+}
+.cd-foot-social:hover {
+  background: rgba(253, 240, 242, 0.3) !important;
+}
+@media (max-width: 900px) {
+  .cd-foot-cols {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .cd-foot-cols,
+  .cd-foot-locs {
+    grid-template-columns: 1fr;
+  }
+  .cd-foot-locs > * + * {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1px solid rgba(253, 240, 242, 0.28);
+    padding-top: 18px;
+  }
 }
 
 /* collage image pop: zoom out from 120% to 100% over the first ~2s on appear */

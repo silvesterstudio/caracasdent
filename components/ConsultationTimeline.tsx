@@ -4,76 +4,140 @@ import { useEffect, useRef } from "react";
 import ImageSlot from "./ImageSlot";
 
 /**
- * ConsultationTimeline — the "how it works" path that lands the user on the free
- * consultation CTA, styled as a vertical timeline (mosaicist "Our Process"
- * pattern) adapted to the Caracaș light brand.
+ * ConsultationTimeline — "Drumul tău", an EXACT replica of mosaicist.com's
+ * "Our Process" timeline (per user, 2026-07-17: "make it look exactly like
+ * that, with no differences"), measured off the live site at 1265px viewport
+ * and converted to vw so proportions hold at any width:
  *
- * A single coral line runs down the centre of the section. As you scroll, a
- * coral FILL grows from the top down to your scroll position and a small disc
- * rides along its leading edge — so the line reads as real progress along the
- * path, not decoration. Each step is a landscape photo the line passes through,
- * with the coral serif step name on the left and the body copy on the right;
- * the path ends on a single node and the booking CTA.
+ *   • dark #161516 section (mosaicist's body bg — identical to our site ink);
+ *   • giant centered UPPERCASE headline: Inter Tight 400, 15.54vw, lh 1.1,
+ *     ls -0.06em, warm grey #dad3d1, with the small italic PP-Editorial label
+ *     floating over it (their "(services)": 1.05vw at left 63.6%);
+ *   • timeline component 92.85vw wide: items are a 28.6% | 42.7% | 28.6% grid
+ *     with 10.12vw/2.63vw padding, columns 40.47vw tall;
+ *   • per item: a 65.87vw × 36.78vw image absolutely centered (the line passes
+ *     OVER it), the serif step name (3.96vw, 500) left, the 1.58vw body right,
+ *     and a 1.05vw square in the centre column — name, square, and body are all
+ *     position:sticky pinned at calc(50vh + 4px), riding column top → bottom;
+ *   • a 3px full-height #dad3d1 track down the centre + a #f84131 red fill
+ *     that always reaches the viewport centre (their fixed-position bar,
+ *     re-implemented as a JS-driven absolute height — same visual, none of the
+ *     negative-z stacking fragility); the pinned square sits at its tip;
+ *   • activation, LATCHED once per item when its columns pin at the centre
+ *     (their Webflow reveal): the LEFT and RIGHT columns animate opacity
+ *     0.25 → 1, the name flips #dad3d1 → #f84131, the square flips too, and
+ *     the image's BLACK VEIL eases 0.65 → 0.35 (their photos read darkened —
+ *     strongly before reveal, still moody after; ours are brighter clinic
+ *     shots so the resting veil keeps the reference's mood);
+ *   • images PARALLAX (their inline translate3d in vw): translateY runs
+ *     0 → 15.18vw linearly as the item travels viewport-bottom → out-of-view,
+ *     so the photo scrolls ~15% slower than the page. Static top = ITEM top;
+ *     the transform carries it down into place — measured off their inline
+ *     styles (settled = 15.18vw once passed, 0 before entering);
+ *   • 6.32vw fade masks (#161516 → transparent) soften the track's two ends.
+ *
+ * Mosaicist has no eyebrow and no CTA in this section, so neither is rendered
+ * (the old eyebrow/cta props were dropped). Their fonts ARE our fonts
+ * (Inter Tight + PP Editorial New), so the type matches 1:1.
  */
 
-const BG = "#fdf0f2"; // the site-wide soft blush surface
-const INK = "#1c2b30";
-const ACCENT = "#fe7183";
+// mosaicist's layout, the SITE's palette (per user 2026-07-17: keep the exact
+// replica but use the website's own colors/fonts — fonts already matched, so
+// only the colors translate: their warm grey → the site blush, their signal
+// red → the brand coral; the dark sheet is the site ink, unchanged)
+const BG = "#161516"; // the site ink (also mosaicist's body bg)
+const TEXT = "#fdf0f2"; // the site blush as the light text/track color
+const ACCENT = "#eb7180"; // the brand coral (fill, active name/square)
 const FONT = "var(--sans)";
-const IMG_BG = "#dbe3e3";
+const IMG_BG = "#2a2627"; // dark image placeholder on the dark sheet
 
-// Wide, on-brand clinic photography (Unsplash CDN) — one per step, in order.
-// These IDs are the verified-live ones already used elsewhere on the site, here
-// cropped landscape. Swap for the clinic's own photos later; layout is identical.
+// Wide clinic photography (Unsplash CDN) — one per step. Same verified-live IDs
+// as elsewhere on the site, cropped to their 1.79:1 image ratio.
 const U = (id: string, w: number, h: number, faces = false) =>
   `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&q=80&w=${w}&h=${h}${faces ? "&crop=faces" : ""}`;
+// (unique site-wide; content VERIFIED via Unsplash alt text — two of the
+// previous picks turned out to be a massage chair and a man with a pen)
 const STEP_IMAGES = [
-  U("1588776813941-dcf9c55e84d2", 1400, 900), // Programare — clinic
-  U("1662837775286-7e6258c7c595", 1400, 900), // Consultație — chairside exam
-  U("1489278353717-f64c6ee8a4d2", 1400, 900, true), // Plan — bright finished smile
+  U("1629909613654-28e377c37b09", 1600, 894), // Programare — "modern dental office with chair and equipment"
+  U("1681939282781-341ac4f61996", 1600, 894), // Consultație — "a woman getting her teeth checked by a dentist"
+  U("1588776814546-1ffcf47267a5", 1600, 894), // Plan — dental staff reviewing the plan on a tablet
 ];
 
+// their sticky pin line: 50vh + 4px (measured 332.5 @ 657px viewport)
+const PIN = "calc(50vh + 4px)";
+const DRIFT_VW = 0.1518; // image parallax travel (their 15.18vw = 192px @ 1265)
+const VEIL_IDLE = 0.65; // black veil over a not-yet-revealed image
+const VEIL_ACTIVE = 0.35; // resting veil once revealed (keeps the moody read)
+
 export default function ConsultationTimeline({
-  eyebrow,
   title,
   label,
   steps,
-  cta,
   serif,
 }: {
-  eyebrow: string;
   title: string;
   label: string;
   steps: { name: string; desc: string }[];
-  cta: string;
   serif: string;
 }) {
-  const rootRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const fillRef = useRef<HTMLDivElement>(null);
-  const scrubRef = useRef<HTMLDivElement>(null);
+  const compRef = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const colRefs = useRef<Array<HTMLDivElement | null>>([]); // left column per item — pin sensor + reveal
+  const rightColRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const nameRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const squareRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const imgRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const veilRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const activated = useRef<boolean[]>([]);
 
   useEffect(() => {
-    const cl = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
-    let start = 0;
-    let span = 1;
-    const measure = () => {
-      const t = trackRef.current;
-      if (!t) return;
-      // Progress is tied to the TRACK's own travel through the viewport centre,
-      // so the fill/scrubber line up with the actual station photos regardless
-      // of the header height above them.
-      const r = t.getBoundingClientRect();
-      const top = r.top + window.scrollY;
-      start = top - window.innerHeight * 0.5;
-      span = r.height;
-    };
     const update = () => {
-      if (!trackRef.current) return;
-      const p = span > 0 ? cl((window.scrollY - start) / span) : 0;
-      const pct = (p * 100).toFixed(2) + "%";
-      if (fillRef.current) fillRef.current.style.height = pct;
-      if (scrubRef.current) scrubRef.current.style.top = pct;
+      const comp = compRef.current;
+      if (!comp) return;
+      const r = comp.getBoundingClientRect();
+      const threshold = window.innerHeight / 2 + 4;
+
+      // red fill: from the component top down to the viewport centre — the
+      // absolute-height equivalent of their fixed top-0/height-50vh bar
+      const h = Math.max(0, Math.min(threshold - r.top, r.height));
+      if (barRef.current) barRef.current.style.height = h.toFixed(1) + "px";
+
+      // per-item activation, latched ONCE (their Webflow reveal: scrolling
+      // back up does not un-highlight) — both side columns 0.25 → 1, name and
+      // square grey → red, image veil 0.65 → 0.35. The styles are re-written on
+      // every tick (idempotent) so a React re-render can't strand a stale value.
+      colRefs.current.forEach((col, i) => {
+        if (!col) return;
+        if (!activated.current[i] && col.getBoundingClientRect().top <= threshold + 1) {
+          activated.current[i] = true;
+        }
+        if (activated.current[i]) {
+          const rc = rightColRefs.current[i];
+          const n = nameRefs.current[i];
+          const s = squareRefs.current[i];
+          const v = veilRefs.current[i];
+          col.style.opacity = "1";
+          if (rc) rc.style.opacity = "1";
+          if (n) n.style.color = ACCENT;
+          if (s) s.style.background = ACCENT;
+          if (v) v.style.opacity = String(VEIL_ACTIVE);
+        }
+      });
+
+      // image parallax (their inline translate3d, 0 → 15.18vw): the image's
+      // static top is the ITEM top; the transform carries it down as the item
+      // travels viewport-bottom → out-of-view, so it scrolls ~15% slower
+      const vh = window.innerHeight;
+      const drift = DRIFT_VW * window.innerWidth;
+      itemRefs.current.forEach((it, i) => {
+        const img = imgRefs.current[i];
+        if (!it || !img) return;
+        const ir = it.getBoundingClientRect();
+        const travel = vh + img.offsetHeight;
+        const p = travel > 0 ? Math.max(0, Math.min(1, (vh - ir.top) / travel)) : 0;
+        img.style.transform = `translate(-50%, ${(p * drift).toFixed(1)}px)`;
+      });
     };
 
     let raf = 0;
@@ -84,217 +148,230 @@ export default function ConsultationTimeline({
         update();
       });
     };
-    const onResize = () => {
-      measure();
-      update();
-    };
-    measure();
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onResize, { passive: true });
-    const t = setTimeout(() => {
-      measure();
-      update();
-    }, 250);
+    window.addEventListener("resize", onScroll, { passive: true });
+    const t = setTimeout(update, 250);
     return () => {
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener("resize", onScroll);
       if (raf) cancelAnimationFrame(raf);
       clearTimeout(t);
     };
-  }, []);
-
-  const NODE = (
-    <span
-      style={{
-        position: "absolute",
-        left: "50%",
-        top: "-6px",
-        width: "13px",
-        height: "13px",
-        transform: "translateX(-50%) rotate(45deg)",
-        background: ACCENT,
-        boxShadow: `0 0 0 6px ${BG}`,
-        zIndex: 3,
-      }}
-    />
-  );
+  }, [steps]);
 
   return (
-    <section id="drumul" ref={rootRef} style={{ position: "relative", background: BG, padding: "16vh 0 18vh" }}>
-      {/* ── header: eyebrow + big serif title with the small italic label nested ── */}
-      <div style={{ textAlign: "center", padding: "0 6%", marginBottom: "11vh" }}>
-        <div
-          style={{
-            fontFamily: FONT,
-            fontSize: "12px",
-            fontWeight: 800,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: ACCENT,
-            marginBottom: "18px",
-          }}
-        >
-          {eyebrow}
-        </div>
+    // zIndex establishes a stacking context so the z-6 fade masks below stay
+    // CONTAINED — without it the bottom fade (a dark #161516 gradient) escaped to
+    // the root layer and painted over the coral footer that overlaps this
+    // section's tail (the "black overlay gradient" bleeding onto the footer).
+    <section id="drumul" style={{ position: "relative", background: BG, zIndex: 3 }}>
+      {/* ── headline: giant uppercase Inter Tight with the italic serif label
+          floating over it (their .process_h-wrapper) ── */}
+      <div style={{ position: "relative", display: "flex", justifyContent: "center", paddingTop: "7.59vw" }}>
         <h2
           style={{
-            fontFamily: serif,
+            fontFamily: FONT,
             fontWeight: 400,
-            fontSize: "clamp(44px,7vw,120px)",
-            lineHeight: 0.98,
-            letterSpacing: "-0.02em",
-            color: INK,
+            fontSize: "15.54vw",
+            lineHeight: 1.1,
+            letterSpacing: "-0.06em",
+            textTransform: "uppercase",
+            color: TEXT,
             margin: 0,
+            whiteSpace: "nowrap",
           }}
         >
           {title}
-          <span
-            style={{
-              fontSize: "clamp(15px,1.5vw,26px)",
-              fontStyle: "italic",
-              color: "rgba(28,43,48,0.42)",
-              verticalAlign: "0.9em",
-              marginLeft: "0.35em",
-              letterSpacing: 0,
-            }}
-          >
-            {label}
-          </span>
         </h2>
-      </div>
-
-      {/* ── the timeline: central track + stations ── */}
-      <div style={{ position: "relative", maxWidth: "1160px", margin: "0 auto", padding: "0 5%" }}>
-        {/* central track (faint) with a coral progress fill + riding scrubber */}
-        <div
-          ref={trackRef}
+        <p
           style={{
             position: "absolute",
-            left: "50%",
-            top: 0,
-            bottom: "clamp(120px,16vh,190px)",
-            width: "2px",
-            transform: "translateX(-1px)",
-            background: "rgba(28,43,48,0.12)",
-            zIndex: 1,
+            top: "15.43vw",
+            left: "63.64%",
+            fontFamily: serif,
+            fontStyle: "italic",
+            fontWeight: 500, // the hero's italic ("noastră") weight — per user
+            fontSize: "clamp(10px, 1.052vw, 18px)",
+            lineHeight: 1.3,
+            letterSpacing: "-0.03em",
+            color: TEXT,
+            margin: 0,
+            whiteSpace: "nowrap",
           }}
         >
-          <div ref={fillRef} style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "0%", background: ACCENT }} />
-          <div
-            ref={scrubRef}
-            style={{
-              position: "absolute",
-              left: "50%",
-              top: "0%",
-              width: "18px",
-              height: "18px",
-              transform: "translate(-50%,-50%)",
-              borderRadius: "999px",
-              background: ACCENT,
-              border: `3px solid ${BG}`,
-              boxShadow: "0 4px 14px rgba(254,113,131,0.5)",
-              zIndex: 4,
-            }}
-          />
+          {label}
+        </p>
+      </div>
+
+      {/* ── timeline component (their .timeline_component: 92.85vw, centered) ── */}
+      <div ref={compRef} style={{ position: "relative", width: "92.85vw", margin: "0 auto" }}>
+        {/* grey track — full height, 3px, OVER the images (like their z-stack) */}
+        <div
+          style={{
+            position: "absolute",
+            left: "calc(50% - 1.5px)",
+            top: 0,
+            bottom: 0,
+            width: "3px",
+            background: TEXT,
+            zIndex: 2,
+          }}
+        >
+          {/* red fill to the viewport centre (JS height) */}
+          <div ref={barRef} style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "0px", background: ACCENT }} />
         </div>
 
-        {/* stations */}
+        {/* ── items ── */}
         {steps.map((s, i) => (
           <div
             key={i}
+            ref={(el) => {
+              itemRefs.current[i] = el;
+            }}
             style={{
               position: "relative",
               display: "grid",
-              gridTemplateColumns: "1fr minmax(0, 40%) 1fr",
-              alignItems: "center",
-              padding: "8vh 0",
+              gridTemplateColumns: "28.64% 42.72% 28.64%",
+              padding: "10.12vw 2.63vw",
             }}
           >
-            {/* NAME — right-aligned toward the line */}
-            <div style={{ textAlign: "right", paddingRight: "clamp(24px,4vw,64px)" }}>
+            {/* the step image — 65.87vw × 36.78vw, centered on the line; static
+                top = ITEM top, the scroll driver parallaxes it 0 → 15.18vw down */}
+            <div
+              ref={(el) => {
+                imgRefs.current[i] = el;
+              }}
+              style={{
+                position: "absolute",
+                left: "50%",
+                top: 0,
+                width: "65.87vw",
+                height: "36.78vw",
+                transform: "translate(-50%, 0)",
+                willChange: "transform",
+                zIndex: 1,
+                overflow: "hidden",
+                background: IMG_BG,
+              }}
+            >
+              <ImageSlot bg={IMG_BG} dark src={STEP_IMAGES[i % STEP_IMAGES.length]} alt={s.name} label={s.name} />
+              {/* the black veil — strong until the item reveals, moody after */}
               <div
-                style={{
-                  fontFamily: FONT,
-                  fontSize: "13px",
-                  fontWeight: 800,
-                  letterSpacing: "0.14em",
-                  color: "rgba(28,43,48,0.34)",
-                  marginBottom: "14px",
+                ref={(el) => {
+                  veilRefs.current[i] = el;
                 }}
-              >
-                {"0" + (i + 1) + " / 0" + steps.length}
-              </div>
-              <div
                 style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "#000000",
+                  opacity: VEIL_IDLE, // → VEIL_ACTIVE once revealed (latched)
+                  transition: "opacity 0.6s ease",
+                  pointerEvents: "none",
+                }}
+              />
+            </div>
+
+            {/* LEFT — the serif step name, pinned at the centre line; the WHOLE
+                column reveals 0.25 → 1 (their .timeline_left opacity) */}
+            <div
+              ref={(el) => {
+                colRefs.current[i] = el;
+              }}
+              style={{ height: "40.47vw", opacity: 0.25, transition: "opacity 0.6s ease", zIndex: 5 }}
+            >
+              <div
+                ref={(el) => {
+                  nameRefs.current[i] = el;
+                }}
+                style={{
+                  position: "sticky",
+                  top: PIN,
+                  zIndex: 5,
                   fontFamily: serif,
-                  fontWeight: 400,
-                  fontSize: "clamp(30px,3.6vw,60px)",
-                  lineHeight: 1.02,
-                  letterSpacing: "-0.02em",
-                  color: ACCENT,
+                  fontWeight: 500,
+                  fontSize: "3.957vw",
+                  lineHeight: 1.1,
+                  letterSpacing: "-0.03em",
+                  color: TEXT, // → ACCENT coral once pinned (latched)
+                  transition: "color 0.45s ease",
                 }}
               >
                 {s.name}
               </div>
             </div>
 
-            {/* IMAGE — the line runs through its centre; a node sits on top ── */}
-            <div
-              style={{
-                position: "relative",
-                width: "100%",
-                height: "clamp(240px,38vh,420px)",
-                overflow: "hidden",
-                borderRadius: "12px",
-                background: IMG_BG,
-                zIndex: 2,
-                boxShadow: "0 24px 60px -30px rgba(28,43,48,0.5)",
-              }}
-            >
-              <ImageSlot bg={IMG_BG} src={STEP_IMAGES[i % STEP_IMAGES.length]} alt={s.name} label={s.name} />
-              {NODE}
+            {/* CENTRE — the square node riding the line (their .timeline_circle:
+                a 1.05vw SQUARE, border-radius 0) */}
+            <div style={{ height: "40.47vw" }}>
+              <div
+                ref={(el) => {
+                  squareRefs.current[i] = el;
+                }}
+                style={{
+                  position: "sticky",
+                  top: PIN,
+                  zIndex: 5,
+                  width: "clamp(11px, 1.052vw, 16px)",
+                  height: "clamp(11px, 1.052vw, 16px)",
+                  margin: "0 auto",
+                  background: TEXT, // → ACCENT coral once pinned (latched)
+                  transition: "background 0.45s ease",
+                }}
+              />
             </div>
 
-            {/* BODY — left-aligned away from the line */}
-            <div style={{ paddingLeft: "clamp(24px,4vw,64px)" }}>
-              <p
+            {/* RIGHT — the body copy, pinned with the name; the WHOLE column
+                reveals 0.25 → 1 (their .timeline_right opacity) */}
+            <div
+              ref={(el) => {
+                rightColRefs.current[i] = el;
+              }}
+              style={{ height: "40.47vw", opacity: 0.25, transition: "opacity 0.6s ease", zIndex: 5 }}
+            >
+              <div
                 style={{
+                  position: "sticky",
+                  top: PIN,
                   fontFamily: FONT,
-                  fontSize: "clamp(15px,1.15vw,19px)",
-                  lineHeight: 1.6,
-                  color: "rgba(28,43,48,0.66)",
-                  margin: 0,
-                  maxWidth: "34ch",
+                  fontWeight: 400,
+                  fontSize: "clamp(13px, 1.579vw, 30px)",
+                  lineHeight: 1.3,
+                  letterSpacing: "-0.03em",
+                  color: TEXT,
                 }}
               >
                 {s.desc}
-              </p>
+              </div>
             </div>
           </div>
         ))}
 
-        {/* ── the path ends on the CTA ── */}
-        <div style={{ position: "relative", textAlign: "center", paddingTop: "9vh" }}>
-          <button
-            style={{
-              appearance: "none",
-              border: 0,
-              cursor: "pointer",
-              fontFamily: FONT,
-              fontSize: "16px",
-              fontWeight: 800,
-              letterSpacing: "0.01em",
-              color: "#ffffff",
-              background: "#eb7180",
-              borderRadius: "999px",
-              padding: "20px 46px",
-              boxShadow: "0 18px 40px -18px rgba(235,113,128,0.55)",
-            }}
-          >
-            {cta}
-          </button>
-        </div>
+        {/* fade masks softening the track's start and end (their overlay-fades) */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: "6.32vw",
+            background: `linear-gradient(180deg, ${BG}, rgba(10,10,10,0))`,
+            zIndex: 6,
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: "6.32vw",
+            background: `linear-gradient(0deg, ${BG}, rgba(10,10,10,0))`,
+            zIndex: 6,
+            pointerEvents: "none",
+          }}
+        />
       </div>
     </section>
   );

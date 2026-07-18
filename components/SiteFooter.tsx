@@ -1,49 +1,96 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useLenis } from "lenis/react";
 
 /**
- * SiteFooter — a full-bleed PREFOOTER image, with the FOOTER rising up OVER it
- * (not the default flow). The footer's top edge starts as a big convex curve (a
- * circle/dome) and flattens to a normal flat footer as it settles into place.
+ * SiteFooter — the coral footer rises within its own dark section: pulled up
+ * under the "Drumul tău" timeline by just the dome height, its convex top edge
+ * flattening as it settles (see the scroll effect). Content, top→bottom:
+ *   • the smile logo + heading + a location radio picker + the contact form;
+ *   • a lower block of three columns — Servicii, Clinica, Locații (the three
+ *     Chișinău locations with address / phone / hours, thin seam lines between
+ *     them like the aventura reference);
+ *   • a bottom bar: copyright · legal links (comma-separated) · developer credit.
+ * All content is blush (#fdf0f2) on the coral (#eb7180) — no pure white.
  */
 
 const FOOT_BG = "#eb7180"; // brand coral — footer background
-const LIGHT = "#ffffff"; // white content on the coral footer
+const LIGHT = "#fdf0f2"; // blush content on the coral footer (site-wide: no pure white)
+const MUTED = "rgba(253,240,242,0.66)";
+const FAINT = "rgba(253,240,242,0.5)";
+const LINE = "rgba(253,240,242,0.26)";
 const FONT = "var(--sans)";
 
 type FooterCopy = {
-  heading: string;
-  chooseLocation: string;
-  locations: [string, string, string];
+  formTitle: string;
+  callQuestion: string;
+  callPhone: string;
   name: string;
+  surname: string;
+  email: string;
   phone: string;
   message: string;
+  submit: string;
+  clinicTitle: string;
+  clinicLinks: { label: string; target: string }[];
+  contactTitle: string;
+  address: string;
+  contactEmail: string;
+  mapLabel: string;
+  scheduleTitle: string;
+  schedule: { days: string; time: string }[];
+  motto: string;
+  quote: string;
+  copyright: string;
+  developedBy: string;
+  developer: string;
 };
 
-export default function SiteFooter({ footer, book, serif }: { footer: FooterCopy; book: string; serif: string }) {
+// Google Maps target for "Ne găsiți aici" — the clinic's real place entry
+const MAP_HREF =
+  "https://www.google.com/maps/place/Caraca%C8%99-Dental/@46.9979349,28.8180547,17z/data=!4m15!1m8!3m7!1s0x40c97e9110f2d09f:0xff300d6cdc2a12d2!2sStrada+Gheorghe+Asachi+65,+MD-2028,+Chi%C8%99in%C4%83u,+Moldova!3b1!8m2!3d46.9979189!4d28.8206085!16s%2Fg%2F11bw3z0ndl!3m5!1s0x40c97e9110f2d09f:0x5d1fbf8a400aed44!8m2!3d46.9977703!4d28.8205762!16s%2Fg%2F11gznv0v0?entry=ttu&g_ep=EgoyMDI2MDcxNS4wIKXMDSoASAFQAw%3D%3D";
+// the clinic's socials
+const SOCIAL_HREFS: Record<string, string> = {
+  Instagram: "https://www.instagram.com/caracas.md/",
+  Facebook: "https://www.facebook.com/Caracas.md/",
+};
+
+// the footer's domed top only overlaps the timeline by this much (= the dome
+// height), so there is NO empty gap — the coral sits right under the timeline,
+// and only the dome's cut corners reveal the timeline's ink behind them.
+const DOME = 130;
+
+/** the roll-up hover label (user likes it): two stacked copies, hover slides both up */
+function Roll({ text }: { text: string }) {
+  return (
+    <span className="cd-roll">
+      <span>{text}</span>
+      <span aria-hidden>{text}</span>
+    </span>
+  );
+}
+
+export default function SiteFooter({ footer, serif }: { footer: FooterCopy; serif: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const footRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const cl = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
-    let total = 0;
-    let rootTop = 0;
-    const measure = () => {
-      const r = rootRef.current;
-      if (!r) return;
-      rootTop = r.offsetTop;
-      total = r.offsetHeight - window.innerHeight;
-    };
     const update = () => {
-      const el = footRef.current;
+      const el = rootRef.current;
       if (!el) return;
-      const p = total > 0 ? cl((window.scrollY - rootTop) / total) : 0;
-      const rise = cl(p / 0.82); // footer rises over the image, settled by p=0.82
-      const curve = (1 - rise) * 190; // big dome while rising → flat when settled
-      el.style.transform = "translateY(" + ((1 - rise) * 100).toFixed(2) + "%)";
-      el.style.borderTopLeftRadius = "50% " + curve.toFixed(1) + "px";
-      el.style.borderTopRightRadius = "50% " + curve.toFixed(1) + "px";
+      // Flatten the dome across the footer's ENTIRE reveal — from first
+      // appearing at the viewport bottom (top = vh) to resting at its settled
+      // position. For a footer SHORTER than the viewport the settled top is not
+      // 0 but `vh - height`, so the flatten span is min(vh, height): using the
+      // full available scroll range is what keeps it from finishing too early.
+      const r = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const span = Math.min(vh, r.height) || 1;
+      const p = cl((vh - r.top) / span);
+      const curve = ((1 - p) * DOME).toFixed(1);
+      el.style.borderTopLeftRadius = "50% " + curve + "px";
+      el.style.borderTopRightRadius = "50% " + curve + "px";
     };
     let raf = 0;
     const onScroll = () => {
@@ -53,30 +100,48 @@ export default function SiteFooter({ footer, book, serif }: { footer: FooterCopy
         update();
       });
     };
-    const onResize = () => {
-      measure();
-      update();
-    };
-    measure();
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onResize, { passive: true });
-    const t = setTimeout(() => {
-      measure();
-      update();
-    }, 200);
+    window.addEventListener("resize", onScroll, { passive: true });
+    const t = setTimeout(update, 200);
     return () => {
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener("resize", onScroll);
       if (raf) cancelAnimationFrame(raf);
       clearTimeout(t);
     };
   }, []);
 
+  // Lenis-aware link scrolling (mirrors CaracasHero's goTo): "top" / "footer" /
+  // a section selector. Falls back to native smooth scroll without Lenis.
+  const lenis = useLenis();
+  const goTo = (target: string) => {
+    if (target === "top" || target === "footer") {
+      const y = target === "top" ? 0 : document.documentElement.scrollHeight;
+      if (lenis && typeof lenis.scrollTo === "function") lenis.scrollTo(y, { force: true });
+      else window.scrollTo({ top: y, behavior: "smooth" });
+      return;
+    }
+    if (target === "cine") {
+      // "Despre noi": the Cine suntem panel is fully risen exactly one viewport
+      // above the services section (the hero root ends where #servicii begins)
+      const sv = document.querySelector("#servicii") as HTMLElement | null;
+      if (!sv) return;
+      const y = sv.getBoundingClientRect().top + window.scrollY - window.innerHeight;
+      if (lenis && typeof lenis.scrollTo === "function") lenis.scrollTo(y, { force: true });
+      else window.scrollTo({ top: y, behavior: "smooth" });
+      return;
+    }
+    const el = document.querySelector(target) as HTMLElement | null;
+    if (!el) return;
+    if (lenis && typeof lenis.scrollTo === "function") lenis.scrollTo(el, { offset: -64, force: true });
+    else window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 64, behavior: "smooth" });
+  };
+
   const inputStyle: React.CSSProperties = {
     appearance: "none",
     background: "transparent",
-    border: "1px solid rgba(255,255,255,0.4)",
+    border: `1px solid ${LINE}`,
     borderRadius: "999px",
     padding: "18px 26px",
     fontFamily: FONT,
@@ -86,79 +151,269 @@ export default function SiteFooter({ footer, book, serif }: { footer: FooterCopy
     width: "100%",
   };
 
+  const colTitle: React.CSSProperties = {
+    fontFamily: FONT,
+    fontSize: "clamp(13px,0.95vw,16px)",
+    fontWeight: 400,
+    color: FAINT,
+    margin: "0 0 clamp(24px,3vh,40px)",
+  };
+
+  // a link/label styled as a footer nav item
+  const linkBtn: React.CSSProperties = {
+    appearance: "none",
+    border: 0,
+    background: "transparent",
+    padding: 0,
+    textAlign: "left",
+    cursor: "pointer",
+    fontFamily: FONT,
+    fontSize: "clamp(17px,1.35vw,22px)",
+    fontWeight: 600,
+    letterSpacing: "-0.01em",
+    color: LIGHT,
+  };
+
   return (
-    <div ref={rootRef} style={{ position: "relative", height: "180vh", marginTop: "-80vh", zIndex: 5 }}>
-      <div style={{ position: "sticky", top: 0, height: "100vh", overflow: "hidden", background: "transparent", pointerEvents: "none" }}>
-        {/* ── FOOTER panel rises OVER the previous (Ce oferim) section, curved top
-             flattening. No prefooter image — the sticky area is transparent. ── */}
+    // the footer sits DIRECTLY under the timeline, pulled up by just the dome
+    // height so its curved top overlaps the timeline's dark tail (the cut
+    // corners reveal that ink). No tall rise-space → no empty gap. The convex
+    // top flattens as you scroll in (see the effect above).
+    <div
+      ref={rootRef}
+      style={{
+        position: "relative",
+        zIndex: 5,
+        marginTop: `-${DOME}px`,
+        background: FOOT_BG,
+        borderTopLeftRadius: "50% 130px",
+        borderTopRightRadius: "50% 130px",
+        willChange: "border-radius",
+        // just enough top padding to clear the domed edge — a bigger cushion here
+        // pushed the logo way too far down (per user)
+        padding: `calc(clamp(8px,1.5vh,20px) + ${DOME}px) 5% clamp(30px,5vh,60px)`,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* logo (smile) centered — larger, with a big gap to the content below */}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: "clamp(60px,11vh,140px)" }}>
+        {/* logo tinted to blush (not pure white) via a mask, so it matches
+            the site-wide no-white rule; aspect from the SVG viewBox 834×346 */}
         <div
-          ref={footRef}
+          role="img"
+          aria-label="Caracaș Dental"
           style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 2,
-            background: FOOT_BG,
-            transform: "translateY(100%)",
-            borderTopLeftRadius: "50% 190px",
-            borderTopRightRadius: "50% 190px",
-            willChange: "transform, border-radius",
-            pointerEvents: "auto",
-            padding: "clamp(40px,7vh,90px) 5% clamp(30px,5vh,60px)",
-            display: "flex",
-            flexDirection: "column",
+            height: "clamp(70px,7.5vw,104px)",
+            aspectRatio: "834 / 346",
+            background: LIGHT,
+            opacity: 0.95,
+            WebkitMaskImage: "url(/caracas-logo.svg)",
+            maskImage: "url(/caracas-logo.svg)",
+            WebkitMaskRepeat: "no-repeat",
+            maskRepeat: "no-repeat",
+            WebkitMaskSize: "contain",
+            maskSize: "contain",
+            WebkitMaskPosition: "center",
+            maskPosition: "center",
+          }}
+        />
+      </div>
+
+      {/* form title (the aventura "Book a call." voice) + radios + contact form */}
+      <div style={{ maxWidth: "820px", margin: "0 auto", width: "100%" }}>
+        <h2
+          style={{
+            fontFamily: serif,
+            fontStyle: "italic",
+            fontWeight: 500,
+            fontSize: "clamp(36px,3.6vw,58px)",
+            lineHeight: 0.95,
+            letterSpacing: "-0.03em",
+            color: LIGHT,
+            margin: "0 0 clamp(28px,4vh,44px)",
+            maxWidth: "14ch",
           }}
         >
-          {/* logo (smile) centered — larger, with a big gap to the content below */}
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "clamp(70px,14vh,170px)" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- brand logo SVG */}
-            <img src="/caracas-logo.svg" alt="Caracaș Dental" style={{ height: "clamp(70px,7.5vw,104px)", width: "auto", filter: "brightness(0) invert(1)", opacity: 0.95 }} />
-          </div>
+          {footer.formTitle}
+        </h2>
 
-          {/* heading + form (no socials, no location picker) */}
-          <div style={{ maxWidth: "820px", margin: "0 auto", width: "100%" }}>
-            <h2
+        {/* "Ai o întrebare? Sună chiar acum" + the clinic phone */}
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "8px 14px", marginBottom: "clamp(22px,3vh,36px)", fontFamily: FONT, fontSize: "clamp(14px,1.05vw,17px)" }}>
+          <span style={{ color: MUTED, fontWeight: 400 }}>{footer.callQuestion}</span>
+          <a
+            href={`tel:${footer.callPhone.replace(/\s+/g, "")}`}
+            style={{ color: LIGHT, fontWeight: 700, letterSpacing: "0.01em", textDecoration: "underline", textUnderlineOffset: "4px" }}
+          >
+            {footer.callPhone}
+          </a>
+        </div>
+
+        {/* the clinic's real form: Nume/Prenume, Email/Telefon, message + Trimite */}
+        <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginBottom: "14px" }}>
+          <input className="cd-foot-input" style={{ ...inputStyle, flex: "1 1 240px" }} placeholder={footer.name} />
+          <input className="cd-foot-input" style={{ ...inputStyle, flex: "1 1 240px" }} placeholder={footer.surname} />
+        </div>
+        <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginBottom: "14px" }}>
+          <input className="cd-foot-input" style={{ ...inputStyle, flex: "1 1 240px" }} type="email" placeholder={footer.email} />
+          <input className="cd-foot-input" style={{ ...inputStyle, flex: "1 1 240px" }} type="tel" placeholder={footer.phone} />
+        </div>
+        <div style={{ display: "flex", gap: "14px", alignItems: "stretch" }}>
+          <input className="cd-foot-input" style={{ ...inputStyle, flex: 1 }} placeholder={footer.message} />
+          <button
+            aria-label={footer.submit}
+            style={{
+              appearance: "none",
+              border: 0,
+              cursor: "pointer",
+              flex: "none",
+              width: "58px",
+              height: "58px",
+              borderRadius: "999px",
+              background: LIGHT,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8h9M8.5 4l4 4-4 4" stroke="#eb7180" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+
+        {/* socials — the aventura circle links (placeholder hrefs for now) */}
+        <div style={{ display: "flex", gap: "12px", marginTop: "clamp(24px,3.6vh,44px)" }}>
+          {[
+            {
+              label: "Instagram",
+              d: "M8 5.7A2.3 2.3 0 1 0 8 10.3 2.3 2.3 0 0 0 8 5.7Zm0-1.2a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Zm3.8-.3a.8.8 0 1 1-1.6 0 .8.8 0 0 1 1.6 0ZM8 2.4c-1.7 0-1.9 0-2.6 0-1.5.1-2.3.9-2.4 2.4 0 .7 0 .9 0 2.6s0 1.9 0 2.6c.1 1.5.9 2.3 2.4 2.4.7 0 .9 0 2.6 0s1.9 0 2.6 0c1.5-.1 2.3-.9 2.4-2.4 0-.7 0-.9 0-2.6s0-1.9 0-2.6c-.1-1.5-.9-2.3-2.4-2.4-.7 0-.9 0-2.6 0ZM8 1.2c1.8 0 2 0 2.7 0 2.1.1 3.3 1.3 3.4 3.4 0 .7 0 .9 0 2.7s0 2 0 2.7c-.1 2.1-1.3 3.3-3.4 3.4-.7 0-.9 0-2.7 0s-2 0-2.7 0C3.2 13.3 2 12.1 1.9 10c0-.7 0-.9 0-2.7s0-2 0-2.7C2 2.5 3.2 1.3 5.3 1.2c.7 0 .9 0 2.7 0Z",
+            },
+            {
+              label: "Facebook",
+              d: "M9.2 14V8.9h1.7l.3-2H9.2V5.6c0-.6.2-1 1-1h1.1V2.8c-.2 0-.9-.1-1.6-.1-1.6 0-2.7 1-2.7 2.8v1.4H5.2v2H7V14h2.2Z",
+            },
+          ].map((s, i) => (
+            <a
+              key={i}
+              href={SOCIAL_HREFS[s.label]}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={s.label}
+              className="cd-foot-social"
               style={{
-                fontFamily: serif,
-                fontWeight: 400,
-                fontSize: "clamp(32px,3.8vw,66px)",
-                lineHeight: 1.06,
-                letterSpacing: "-0.015em",
+                width: "52px",
+                height: "52px",
+                borderRadius: "50%",
+                background: "rgba(253,240,242,0.16)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 color: LIGHT,
-                margin: "0 0 clamp(32px,5vh,56px)",
-                maxWidth: "20ch",
               }}
             >
-              {footer.heading}
-            </h2>
+              <svg width="19" height="19" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                <path d={s.d} />
+              </svg>
+            </a>
+          ))}
+        </div>
+      </div>
 
-            <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginBottom: "14px" }}>
-              <input style={{ ...inputStyle, flex: "1 1 240px" }} placeholder={footer.name} />
-              <input style={{ ...inputStyle, flex: "1 1 240px" }} placeholder={footer.phone} />
+      {/* ── lower block: Clinica · contact/orar/motto ── */}
+      <div className="cd-foot-cols" style={{ width: "100%", marginTop: "clamp(64px,12vh,150px)" }}>
+        {/* Clinica — nav links */}
+        <div>
+          <div style={colTitle}>{footer.clinicTitle}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "clamp(12px,1.6vh,20px)", alignItems: "flex-start" }}>
+            {footer.clinicLinks.map((l, i) => (
+              <button key={i} onClick={() => goTo(l.target)} style={linkBtn}>
+                <Roll text={l.label} />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Contact / Orar / Motto — the clinic's real details (one location) */}
+        <div>
+          <div className="cd-foot-locs">
+            {/* Detalii de contact */}
+            <div>
+              <div style={colTitle}>{footer.contactTitle}</div>
+              <div style={{ fontFamily: FONT, fontSize: "clamp(14px,1.05vw,17px)", fontWeight: 600, lineHeight: 1.45, color: LIGHT, marginBottom: "clamp(14px,1.8vh,22px)" }}>
+                {footer.address}
+              </div>
+              <a
+                href={`tel:${footer.callPhone.replace(/\s+/g, "")}`}
+                style={{ fontFamily: FONT, fontSize: "clamp(15px,1.15vw,19px)", fontWeight: 600, color: LIGHT, display: "inline-block", marginBottom: "clamp(10px,1.4vh,16px)" }}
+              >
+                {footer.callPhone}
+              </a>
+              <br />
+              <a
+                href={`mailto:${footer.contactEmail}`}
+                style={{ fontFamily: FONT, fontSize: "clamp(13px,0.95vw,15px)", fontWeight: 500, color: MUTED, display: "inline-block", marginBottom: "clamp(14px,2vh,24px)" }}
+              >
+                {footer.contactEmail}
+              </a>
+              <br />
+              <a
+                href={MAP_HREF}
+                target="_blank"
+                rel="noreferrer"
+                style={{ fontFamily: FONT, fontSize: "clamp(13px,0.95vw,15px)", fontWeight: 600, color: LIGHT, textDecoration: "underline", textUnderlineOffset: "4px" }}
+              >
+                <Roll text={footer.mapLabel} />
+              </a>
             </div>
-            <div style={{ display: "flex", gap: "14px", alignItems: "stretch" }}>
-              <input style={{ ...inputStyle, flex: 1 }} placeholder={footer.message} />
-              <button
-                aria-label={book}
+
+            {/* Orarul săptămânii */}
+            <div>
+              <div style={colTitle}>{footer.scheduleTitle}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", columnGap: "18px", rowGap: "8px", fontFamily: FONT, fontSize: "clamp(13px,0.95vw,15px)", lineHeight: 1.5 }}>
+                {footer.schedule.map((h, hi) => (
+                  <div key={hi} style={{ display: "contents" }}>
+                    <span style={{ color: FAINT, whiteSpace: "nowrap" }}>{h.days}</span>
+                    <span style={{ color: LIGHT, whiteSpace: "nowrap" }}>{h.time}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* the clinic motto + the smile quote */}
+            <div>
+              <div
                 style={{
-                  appearance: "none",
-                  border: 0,
-                  cursor: "pointer",
-                  flex: "none",
-                  width: "58px",
-                  height: "58px",
-                  borderRadius: "999px",
-                  background: "#ffffff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  fontFamily: serif,
+                  fontStyle: "italic",
+                  fontWeight: 500,
+                  fontSize: "clamp(20px,1.7vw,28px)",
+                  lineHeight: 1.15,
+                  letterSpacing: "-0.02em",
+                  color: LIGHT,
+                  marginBottom: "clamp(14px,2vh,24px)",
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-                  <path d="M3 8h9M8.5 4l4 4-4 4" stroke="#eb7180" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
+                {footer.motto}
+              </div>
+              <div style={{ fontFamily: FONT, fontSize: "clamp(12px,0.9vw,14px)", fontWeight: 400, lineHeight: 1.55, color: MUTED, maxWidth: "30ch" }}>
+                {footer.quote}
+              </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── bottom bar: copyright · legal · developer ── */}
+      <div className="cd-foot-bar" style={{ width: "100%", marginTop: "clamp(56px,10vh,120px)", paddingTop: "clamp(24px,4vh,44px)", borderTop: `1px solid ${LINE}` }}>
+        <div style={{ fontFamily: FONT, fontSize: "13px", lineHeight: 1.5, color: MUTED }}>
+          Copyright © 2026
+          <br />
+          <span style={{ color: LIGHT }}>{footer.copyright}</span>
+        </div>
+        <div style={{ fontFamily: FONT, fontSize: "13px", color: MUTED }}>
+          {footer.developedBy}{" "}
+          <span style={{ color: LIGHT, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>{footer.developer}</span>
         </div>
       </div>
     </div>

@@ -5,8 +5,8 @@ import { useLenis } from "lenis/react";
 import ImageSlot from "./ImageSlot";
 import EchipaSection from "./EchipaSection";
 import ServicesSection from "./ServicesSection";
+import SmilesShowcase from "./SmilesShowcase";
 import ConsultationTimeline from "./ConsultationTimeline";
-import FaqSection from "./FaqSection";
 import SiteFooter from "./SiteFooter";
 
 /**
@@ -51,7 +51,7 @@ const DOCTOR_PHOTOS = [
 ];
 const DOCTOR_CANDIDS = [
   U("1663151064065-cb334788f77d", 700, 900),
-  U("1662837775286-7e6258c7c595", 700, 900),
+  U("1588776814546-daab30f310ce", 700, 900), // "woman in white scrub suit" — verified dental-context at-work shot
   U("1663185551550-f8f56529ac5e", 700, 900),
 ];
 // ── "Cine suntem?" — ONE tall photo at a time shared by all 4 collage strips. Each
@@ -67,35 +67,45 @@ const CINE_IMAGES = [
   U("1697033803887-b1a061290569", 1000, 1500), // patient in the chair, teeth being checked
   U("1560070201-d3d11effa179", 1000, 1500), // hygienist with instruments at the patient's mouth
 ];
-// ── expanded-menu service cards (square crops of the 4 service photos, shown B&W like the reference)
+// ── expanded-menu service cards (B&W squares like the reference; UNIQUE photos,
+// content VERIFIED via Unsplash alt text — the previous batch was picked blind
+// and turned out to be a barber / a PlayStation / random portraits, per user)
 const MENU_SERVICE_IMAGES = [
-  U("1588776813941-dcf9c55e84d2", 600, 600), // Implantologie
-  U("1567516364473-233c4b6fcfbe", 600, 600, true), // Ortodonție
-  U("1662837775286-7e6258c7c595", 600, 600), // Terapie
-  U("1489278353717-f64c6ee8a4d2", 600, 600, true), // Estetică dentară
+  U("1593022356769-11f762e25ed9", 600, 600), // Implantologie — "dental implant model with teeth"
+  U("1720685193964-4529228a33c1", 600, 600), // Ortodonție — "close up of a tooth with braces"
+  U("1606811971618-4486d14f3f99", 600, 600), // Terapie — "dental exam with mirror and tool"
+  U("1670250492416-570b5b7343b1", 600, 600), // Estetică dentară — "a person's mouth with teeth"
 ];
-// ── "after" result photos: bright, clean, repaired smiles for the Rezultate portfolio.
+// ── "after" result photos: bright, clean, repaired smiles for the Rezultate
+// showcase — 7 photos (the grid's other 3 cells are VIDEOS) and, like every
+// image on the site, each appears exactly ONCE site-wide (per user).
 const RESULT_IMAGES = [
-  U("1489278353717-f64c6ee8a4d2", 900, 1000, true),
-  U("1567516364473-233c4b6fcfbe", 900, 1000, true),
+  U("1494790108377-be9c29b29330", 900, 1000, true),
+  U("1438761681033-6461ffad8d80", 900, 1000, true),
   U("1677026010083-78ec7f1b84ed", 900, 1000, true),
   U("1611166819595-ac34987dfa57", 900, 1000, true),
   U("1675526607070-f5cbd71dde92", 900, 1000, true),
   U("1769559893692-c6d0623bf8e4", 900, 1000, true),
   U("1654373535457-383a0a4d00f9", 900, 1000, true),
-  U("1680049113650-4a1c24f61d71", 900, 1000, true),
-  U("1548382131-e0ebb1f0cdea", 900, 1000, true),
-  U("1499313843378-eebdb187f629", 900, 1000, true),
+  // the "Vezi mai multe" batch (5 photos + 1 more video in the component)
+  U("1580489944761-15a19d654956", 900, 1000, true),
+  U("1529626455594-4ff0802cfb7e", 900, 1000, true),
+  U("1544005313-94ddf0286df2", 900, 1000, true),
+  U("1500648767791-00dcc994a43e", 900, 1000, true),
+  U("1507003211169-0a1dd7228f2d", 900, 1000, true),
 ];
+
+// one service: card/row name + the copy shown in the bottom-sheet popup
+export type ServiceItem = { name: string; desc: string; points: string[] };
 
 type Doctor = {
   name: [string, string];
   spec: string;
   bio: string;
-  services: [string, string, string, string];
+  // each doctor's signature services — full items, so the Echipa rows open the
+  // same bottom-sheet popup as the services section
+  services: [ServiceItem, ServiceItem, ServiceItem, ServiceItem];
 };
-// one service: card/row name + the copy shown in the bottom-sheet popup
-export type ServiceItem = { name: string; desc: string; points: string[] };
 
 type Copy = {
   nav: { menu: string; services: string; patientForm: string; city: string; contact: string; basedIn: string };
@@ -126,12 +136,29 @@ type Copy = {
   process: { eyebrow: string; title: string; label: string; steps: { name: string; desc: string }[]; cta: string };
   faq: { eyebrow: string; title: string; items: { q: string; a: string }[] };
   footer: {
-    heading: string;
-    chooseLocation: string;
-    locations: [string, string, string];
+    formTitle: string; // the short italic CTA above the form
+    callQuestion: string; // "Ai o întrebare? Sună chiar acum"
+    callPhone: string; // the clinic phone, displayed + tel: link
     name: string;
+    surname: string;
+    email: string;
     phone: string;
     message: string;
+    submit: string;
+    // lower footer (columns + bottom bar)
+    clinicTitle: string;
+    clinicLinks: { label: string; target: string }[];
+    contactTitle: string;
+    address: string;
+    contactEmail: string;
+    mapLabel: string; // "Ne găsiți aici" → Google Maps
+    scheduleTitle: string;
+    schedule: { days: string; time: string }[];
+    motto: string; // "Creați pentru a dărui zâmbete"
+    quote: string; // the Tom Wilson smile quote
+    copyright: string; // studio name; the "Copyright © 2026" prefix is rendered
+    developedBy: string;
+    developer: string;
   };
 };
 
@@ -140,6 +167,7 @@ const COPY: Record<"ro" | "ru", Copy> = {
     nav: { menu: "Meniu", services: "Servicii", patientForm: "Formular pacient", city: "Chișinău", contact: "Contactează-ne", basedIn: "Ne găsești în" },
     menuLinks: [
       { label: "Despre noi", target: "cine" },
+      { label: "Servicii", target: "#servicii" },
       { label: "Echipa", target: "#echipa" },
       { label: "Rezultate", target: "#rezultate" },
       { label: "Drumul tău", target: "#drumul" },
@@ -147,7 +175,6 @@ const COPY: Record<"ro" | "ru", Copy> = {
     ],
     menuUtility: [
       { label: "Formular pacient", target: "footer" },
-      { label: "Întrebări frecvente", target: "#faq" },
     ],
     hero: {
       l1: "Dinții tăi,",
@@ -190,6 +217,13 @@ const COPY: Record<"ro" | "ru", Copy> = {
         ["Albire"],
         ["All-on-X"],
         ["Implanturi"],
+        // the "Vezi mai multe" batch (cells 11–16)
+        ["Fațete"],
+        ["Implanturi"],
+        ["Albire"],
+        ["Coroane", "Fațete"],
+        ["Terapie"],
+        ["All-on-X"],
       ],
     },
     services: {
@@ -298,31 +332,122 @@ const COPY: Record<"ro" | "ru", Copy> = {
       ],
     },
     footer: {
-      heading: "Pregătit să-ți transformi zâmbetul? Programează o vizită.",
-      chooseLocation: "Alege locația:",
-      locations: ["Centru", "Botanica", "Ciocana"],
-      name: "Nume",
-      phone: "Număr de telefon",
-      message: "Mesaj",
+      formTitle: "Programează-te online",
+      callQuestion: "Ai o întrebare? Sună chiar acum",
+      callPhone: "+373 68 344 333",
+      name: "Nume*",
+      surname: "Prenume*",
+      email: "Email",
+      phone: "Telefon*",
+      message: "Cu ce vă putem ajuta?*",
+      submit: "Trimite",
+      clinicTitle: "Clinica",
+      clinicLinks: [
+        { label: "Acasă", target: "top" },
+        { label: "Despre noi", target: "cine" },
+        { label: "Servicii", target: "#servicii" },
+        { label: "Echipa noastră", target: "#echipa" },
+        { label: "Rezultate", target: "#rezultate" },
+        { label: "Drumul tău", target: "#drumul" },
+        { label: "Contact", target: "footer" },
+      ],
+      contactTitle: "Detalii de contact",
+      address: "str. Gheorghe Asachi 65, Chișinău",
+      contactEmail: "info@caracas.md",
+      mapLabel: "Ne găsiți aici",
+      scheduleTitle: "Orarul săptămânii",
+      schedule: [
+        { days: "Luni – Vineri", time: "8:00 – 19:00" },
+        { days: "Sâmbătă", time: "8:00 – 13:00" },
+        { days: "Duminică", time: "Zi de odihnă" },
+      ],
+      motto: "Creați pentru a dărui zâmbete",
+      quote: "„Zâmbetul este fericirea care se află chiar sub nasul tău” — Tom Wilson",
+      copyright: "Caracaș Dental Clinic",
+      developedBy: "Dezvoltat de",
+      developer: "Silvester Studio",
     },
     doctors: [
       {
         name: ["Dr. Ion", "Caracaș"],
         spec: "Chirurgie & Implantologie",
         bio: "De la implanturi la reconstrucții complexe, Dr. Ion Caracaș îmbină precizia chirurgicală cu grija pentru fiecare pacient.",
-        services: ["Implanturi dentare", "Chirurgie orală", "Sinus lift", "Extracții complexe"],
+        services: [
+          {
+            name: "Implanturi dentare",
+            desc: "Implanturi planificate digital, cu precizie chirurgicală și rezultate de durată — de la un singur dinte la reconstrucții complete.",
+            points: ["Implant unitar", "Ghid chirurgical digital", "Sinus lift & grefă osoasă", "Coroane pe implant"],
+          },
+          {
+            name: "Chirurgie orală",
+            desc: "Extracții complexe și intervenții chirurgicale efectuate în siguranță, cu recuperare rapidă.",
+            points: ["Extracții de molari de minte", "Rezecții apicale", "Chirurgie parodontală"],
+          },
+          {
+            name: "Sinus lift",
+            desc: "Adiție de os în zona sinusului maxilar — face posibilă implantarea acolo unde osul nu mai este suficient.",
+            points: ["Sinus lift intern & extern", "Grefă osoasă", "Planificare 3D a augmentării"],
+          },
+          {
+            name: "Extracții complexe",
+            desc: "Extracții de molari de minte și dinți compromiși, efectuate blând, în siguranță și cu recuperare rapidă.",
+            points: ["Molari de minte incluși", "Anestezie modernă", "Recomandări post-extracție"],
+          },
+        ],
       },
       {
         name: ["Dr. Elena", "Caracaș"],
         spec: "Stomatologie Terapeutică",
         bio: "De la tratamente de canal la restaurări estetice, Dr. Elena Caracaș redă sănătatea și frumusețea fiecărui zâmbet.",
-        services: ["Tratament de canal", "Obturații estetice", "Coroane & punți", "Tratament parodontal"],
+        services: [
+          {
+            name: "Tratament de canal",
+            desc: "Tratamente endodontice la microscop, care salvează dinții naturali și elimină infecția de la rădăcină.",
+            points: ["Endodonție la microscop", "Obturație tridimensională a canalelor", "Control radiologic la fiecare etapă"],
+          },
+          {
+            name: "Obturații estetice",
+            desc: "Restaurări fizionomice din compozit modern — refac forma și culoarea dintelui, complet invizibil.",
+            points: ["Compozite premium", "Adaptare perfectă a culorii", "Tehnici minim invazive"],
+          },
+          {
+            name: "Coroane & punți",
+            desc: "Coroane și punți ceramice care redau funcția și estetica dinților puternic afectați.",
+            points: ["Ceramică pe zirconiu", "Amprentare digitală", "Adaptare perfectă în mușcătură"],
+          },
+          {
+            name: "Tratament parodontal",
+            desc: "Tratăm gingiile inflamate și oprim evoluția parodontozei, pentru dinți stabili pe termen lung.",
+            points: ["Detartraj subgingival", "Chiuretaj parodontal", "Program de menținere"],
+          },
+        ],
       },
       {
         name: ["Dr. Nicolae", "Caracaș"],
         spec: "Stomatologie Estetică",
         bio: "Cu o abordare atentă și artistică, Dr. Nicolae Caracaș creează zâmbete naturale, luminoase și pline de încredere.",
-        services: ["Fațete dentare", "Albire profesională", "Bonding estetic", "Design digital al zâmbetului"],
+        services: [
+          {
+            name: "Fațete dentare",
+            desc: "Fațete subțiri din ceramică, proiectate digital pentru un zâmbet natural și luminos — fără sacrificarea dinților sănătoși.",
+            points: ["Ceramică E-max", "Digital Smile Design", "Preparare minim invazivă", "Rezultat natural, de durată"],
+          },
+          {
+            name: "Albire profesională",
+            desc: "Albire profesională sigură, cu rezultate vizibile de la prima ședință — fără sensibilitate.",
+            points: ["Albire în cabinet", "Kit personalizat pentru acasă", "Rezultat cu până la 8 nuanțe mai luminos"],
+          },
+          {
+            name: "Bonding estetic",
+            desc: "Corectăm marginile ciobite, fisurile și micile spații cu compozit sculptat direct pe dinte — într-o singură vizită.",
+            points: ["Fără șlefuire", "Rezultat imediat", "O singură ședință"],
+          },
+          {
+            name: "Design digital al zâmbetului",
+            desc: "Îți proiectăm zâmbetul digital înainte de tratament — vezi rezultatul final înainte să începem.",
+            points: ["Digital Smile Design", "Simulare foto & video", "Mock-up în cabinet"],
+          },
+        ],
       },
     ],
   },
@@ -330,6 +455,7 @@ const COPY: Record<"ro" | "ru", Copy> = {
     nav: { menu: "Меню", services: "Услуги", patientForm: "Анкета пациента", city: "Кишинёв", contact: "Свяжитесь с нами", basedIn: "Мы находимся в" },
     menuLinks: [
       { label: "О нас", target: "cine" },
+      { label: "Услуги", target: "#servicii" },
       { label: "Команда", target: "#echipa" },
       { label: "Результаты", target: "#rezultate" },
       { label: "Ваш путь", target: "#drumul" },
@@ -337,7 +463,6 @@ const COPY: Record<"ro" | "ru", Copy> = {
     ],
     menuUtility: [
       { label: "Анкета пациента", target: "footer" },
-      { label: "Частые вопросы", target: "#faq" },
     ],
     hero: {
       l1: "Ваши зубы,",
@@ -377,6 +502,13 @@ const COPY: Record<"ro" | "ru", Copy> = {
         ["Отбеливание"],
         ["All-on-X"],
         ["Импланты"],
+        // the "Показать больше" batch (cells 11–16)
+        ["Виниры"],
+        ["Импланты"],
+        ["Отбеливание"],
+        ["Коронки", "Виниры"],
+        ["Терапия"],
+        ["All-on-X"],
       ],
     },
     services: {
@@ -485,88 +617,126 @@ const COPY: Record<"ro" | "ru", Copy> = {
       ],
     },
     footer: {
-      heading: "Готовы преобразить улыбку? Запишитесь на визит.",
-      chooseLocation: "Выберите локацию:",
-      locations: ["Центр", "Ботаника", "Чеканы"],
-      name: "Имя",
-      phone: "Номер телефона",
-      message: "Сообщение",
+      formTitle: "Запишитесь онлайн",
+      callQuestion: "Есть вопросы? Позвоните прямо сейчас",
+      callPhone: "+373 68 344 333",
+      name: "Имя*",
+      surname: "Фамилия*",
+      email: "Email",
+      phone: "Телефон*",
+      message: "Чем мы можем вам помочь?*",
+      submit: "Отправить",
+      clinicTitle: "Клиника",
+      clinicLinks: [
+        { label: "Главная", target: "top" },
+        { label: "О нас", target: "cine" },
+        { label: "Услуги", target: "#servicii" },
+        { label: "Наша команда", target: "#echipa" },
+        { label: "Результаты", target: "#rezultate" },
+        { label: "Ваш путь", target: "#drumul" },
+        { label: "Контакты", target: "footer" },
+      ],
+      contactTitle: "Контакты",
+      address: "ул. Георге Асаки 65, Кишинёв",
+      contactEmail: "info@caracas.md",
+      mapLabel: "Как нас найти",
+      scheduleTitle: "Расписание недели",
+      schedule: [
+        { days: "Пн – Пт", time: "8:00 – 19:00" },
+        { days: "Суббота", time: "8:00 – 13:00" },
+        { days: "Воскресенье", time: "Выходной" },
+      ],
+      motto: "Создано, чтобы дарить улыбки",
+      quote: "«Улыбка — это счастье прямо под твоим носом» — Том Уилсон",
+      copyright: "Caracaș Dental Clinic",
+      developedBy: "Разработано",
+      developer: "Silvester Studio",
     },
     doctors: [
       {
         name: ["Д-р Ион", "Каракаш"],
         spec: "Хирургия и имплантология",
         bio: "От имплантов до сложных реконструкций — доктор Ион Каракаш сочетает хирургическую точность с заботой о каждом пациенте.",
-        services: ["Зубные импланты", "Оральная хирургия", "Синус-лифтинг", "Сложные удаления"],
+        services: [
+          {
+            name: "Зубные импланты",
+            desc: "Импланты с цифровым планированием, хирургической точностью и долговечным результатом — от одного зуба до полных реконструкций.",
+            points: ["Одиночный имплант", "Хирургический шаблон", "Синус-лифтинг и костная пластика", "Коронки на имплантах"],
+          },
+          {
+            name: "Оральная хирургия",
+            desc: "Сложные удаления и хирургические вмешательства — безопасно и с быстрым восстановлением.",
+            points: ["Удаление зубов мудрости", "Апикальные резекции", "Пародонтальная хирургия"],
+          },
+          {
+            name: "Синус-лифтинг",
+            desc: "Наращивание кости в области верхнечелюстной пазухи — делает имплантацию возможной там, где кости недостаточно.",
+            points: ["Открытый и закрытый синус-лифтинг", "Костная пластика", "3D-планирование операции"],
+          },
+          {
+            name: "Сложные удаления",
+            desc: "Удаление зубов мудрости и разрушенных зубов — бережно, безопасно и с быстрым восстановлением.",
+            points: ["Ретинированные зубы мудрости", "Современная анестезия", "Рекомендации после удаления"],
+          },
+        ],
       },
       {
         name: ["Д-р Елена", "Каракаш"],
         spec: "Терапевтическая стоматология",
         bio: "От лечения каналов до эстетических реставраций — доктор Елена Каракаш возвращает здоровье и красоту каждой улыбке.",
-        services: ["Лечение каналов", "Эстетические пломбы", "Коронки и мосты", "Лечение пародонта"],
+        services: [
+          {
+            name: "Лечение каналов",
+            desc: "Эндодонтическое лечение под микроскопом — сохраняем природные зубы и устраняем инфекцию у корня.",
+            points: ["Эндодонтия под микроскопом", "Трёхмерная пломбировка каналов", "Рентген-контроль на каждом этапе"],
+          },
+          {
+            name: "Эстетические пломбы",
+            desc: "Реставрации из современного композита — восстанавливают форму и цвет зуба совершенно незаметно.",
+            points: ["Премиальные композиты", "Точный подбор цвета", "Минимально инвазивные техники"],
+          },
+          {
+            name: "Коронки и мосты",
+            desc: "Керамические коронки и мосты, возвращающие функцию и эстетику сильно разрушенным зубам.",
+            points: ["Керамика на диоксиде циркония", "Цифровые слепки", "Идеальная посадка по прикусу"],
+          },
+          {
+            name: "Лечение пародонта",
+            desc: "Лечим воспаление дёсен и останавливаем пародонтит — для стабильных зубов на долгие годы.",
+            points: ["Поддесневая чистка", "Пародонтальный кюретаж", "Программа поддержки"],
+          },
+        ],
       },
       {
         name: ["Д-р Николае", "Каракаш"],
         spec: "Эстетическая стоматология",
         bio: "С внимательным и артистичным подходом доктор Николае Каракаш создаёт естественные, сияющие улыбки, полные уверенности.",
-        services: ["Виниры", "Профессиональное отбеливание", "Эстетический бондинг", "Цифровой дизайн улыбки"],
+        services: [
+          {
+            name: "Виниры",
+            desc: "Тонкие керамические виниры, созданные в цифровом протоколе — естественная и сияющая улыбка без обточки здоровых зубов.",
+            points: ["Керамика E-max", "Digital Smile Design", "Минимально инвазивная подготовка", "Естественный долговечный результат"],
+          },
+          {
+            name: "Профессиональное отбеливание",
+            desc: "Безопасное профессиональное отбеливание с видимым результатом с первого сеанса — без чувствительности.",
+            points: ["Отбеливание в клинике", "Персональный набор для дома", "Результат до 8 оттенков светлее"],
+          },
+          {
+            name: "Эстетический бондинг",
+            desc: "Исправляем сколы, трещины и небольшие промежутки композитом прямо на зубе — за один визит.",
+            points: ["Без обточки", "Мгновенный результат", "Одно посещение"],
+          },
+          {
+            name: "Цифровой дизайн улыбки",
+            desc: "Проектируем вашу улыбку в цифровом виде до начала лечения — вы видите результат заранее.",
+            points: ["Digital Smile Design", "Фото- и видеосимуляция", "Mock-up в клинике"],
+          },
+        ],
       },
     ],
   },
 };
-
-// ── Results / portfolio ──────────────────────────────────────────────────────
-// One "block" is a 3-col × 2-row grid: a tall image spanning both rows on one
-// side, and the other two columns each split into 2 stacked cells. The `reversed`
-// flag mirrors the tall image to the opposite side for the alternating block.
-const RES_PILL: React.CSSProperties = {
-  fontFamily: FONT,
-  fontSize: "12px",
-  fontWeight: 700,
-  letterSpacing: "0.04em",
-  textTransform: "uppercase",
-  color: INK,
-  background: "rgba(244,246,246,0.92)",
-  padding: "7px 13px",
-  borderRadius: "6px",
-};
-
-function ResTile({ tags, area, src }: { tags: string[]; area: string; src?: string }) {
-  return (
-    <div style={{ gridArea: area, position: "relative", overflow: "hidden", background: "#dfe6e6" }}>
-      <ImageSlot bg="#dfe6e6" src={src} label={tags[0]} />
-      <div style={{ position: "absolute", left: "14px", bottom: "14px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
-        {tags.map((tg, i) => (
-          <span key={i} style={RES_PILL}>
-            {tg}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ResultsBlock({ tiles, images = [], reversed = false }: { tiles: string[][]; images?: string[]; reversed?: boolean }) {
-  // tiles[0] is the tall image; [1..4] fill the two split columns
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr 1fr",
-        gridTemplateRows: "1fr 1fr",
-        gridTemplateAreas: reversed ? '"a c big" "b d big"' : '"big a c" "big b d"',
-        gap: "clamp(10px,1vw,18px)",
-        height: "clamp(560px,86vh,900px)",
-      }}
-    >
-      <ResTile tags={tiles[0]} area="big" src={images[0]} />
-      <ResTile tags={tiles[1]} area="a" src={images[1]} />
-      <ResTile tags={tiles[2]} area="b" src={images[2]} />
-      <ResTile tags={tiles[3]} area="c" src={images[3]} />
-      <ResTile tags={tiles[4]} area="d" src={images[4]} />
-    </div>
-  );
-}
 
 export type CaracasHeroProps = {
   scrubHeight?: number;
@@ -1228,7 +1398,7 @@ export default function CaracasHero({
           onClick={() => setMenuOpen((o) => !o)}
           aria-label={t.nav.menu}
           aria-expanded={menuOpen}
-          style={{ ...navRowText, appearance: "none", border: 0, background: "transparent", padding: 0, gap: "10px", cursor: "pointer", fontFamily: FONT, fontSize: "12px", fontWeight: 500, letterSpacing: "0.04em", color: "rgba(255,255,255,0.92)" }}
+          style={{ ...navRowText, appearance: "none", border: 0, background: "transparent", padding: 0, gap: "10px", cursor: "pointer", fontFamily: FONT, fontSize: "12px", fontWeight: 500, letterSpacing: "0.04em", color: "rgba(253,240,242,0.92)" }}
         >
           {t.nav.menu}
           <span className={`cd-burger${menuOpen ? " cd-burger--x" : ""}`} aria-hidden>
@@ -1237,7 +1407,7 @@ export default function CaracasHero({
           </span>
         </button>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "26px", color: "#ffffff" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "26px", color: "#fdf0f2" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           {(["ro", "ru"] as const).map((l) => (
             <button
@@ -1312,7 +1482,7 @@ export default function CaracasHero({
         // brand-pink sheet (per user) — coral like the footer, deepening toward the
         // bottom-right so the white content keeps its contrast
         background: "linear-gradient(158deg,#f0808e 0%,#eb7180 48%,#d95a6b 100%)",
-        color: "#ffffff",
+        color: "#fdf0f2",
         transform: menuOpen ? "translateY(0)" : "translateY(-100%)",
         pointerEvents: menuOpen ? "auto" : "none",
         transition: "transform 0.9s cubic-bezier(0.16,1,0.3,1)",
@@ -1764,72 +1934,31 @@ export default function CaracasHero({
     {/* ── ECHIPA NOASTRĂ — its OWN section you scroll down into. Its Dr. 1 image is handed
         off from the Scopul collage (pinned & grown in by the scroll driver above via
         echDr1Ref), then released as this section's carousel base. ── */}
-    <EchipaSection dr1Ref={echDr1Ref} doctors={t.doctors} photos={DOCTOR_PHOTOS} candids={DOCTOR_CANDIDS} book={t.book} serif={serifFont} />
+    <EchipaSection dr1Ref={echDr1Ref} doctors={t.doctors} photos={DOCTOR_PHOTOS} candids={DOCTOR_CANDIDS} serif={serifFont} />
 
-    {/* ── REZULTATE / portfolio — tall image + two split columns, block mirrored ── */}
-    <section
-      id="rezultate"
-      style={{
-        background: BG,
-        padding: "clamp(70px,9vh,140px) 5% clamp(90px,12vh,150px)",
-      }}
-    >
-      <h2
-        style={{
-          fontFamily: serifFont,
-          fontWeight: 400,
-          fontSize: "clamp(34px,4.6vw,84px)",
-          lineHeight: 1.02,
-          letterSpacing: "-0.02em",
-          color: INK,
-          margin: "0 0 clamp(36px,5vh,64px)",
-          maxWidth: "16ch",
-        }}
-      >
-        {t.results.title}
-      </h2>
-
-      <div style={{ display: "grid", gap: "clamp(10px,1vw,18px)" }}>
-        <ResultsBlock tiles={t.results.tiles.slice(0, 5)} images={RESULT_IMAGES.slice(0, 5)} />
-        <ResultsBlock tiles={t.results.tiles.slice(5, 10)} images={RESULT_IMAGES.slice(5, 10)} reversed />
-      </div>
-
-      <div style={{ display: "flex", justifyContent: "center", marginTop: "clamp(36px,5vh,64px)" }}>
-        <button
-          style={{
-            appearance: "none",
-            border: 0,
-            cursor: "pointer",
-            background: ACCENT,
-            color: "#fff",
-            fontFamily: FONT,
-            fontSize: "15px",
-            fontWeight: 800,
-            letterSpacing: "0.01em",
-            borderRadius: "999px",
-            padding: "18px 42px",
-          }}
-        >
-          {t.results.more}
-        </button>
-      </div>
-    </section>
-
-    {/* ── DRUMUL TĂU — free-consultation path as a vertical timeline → CTA ── */}
-    <ConsultationTimeline
-      eyebrow={t.process.eyebrow}
-      title={t.process.title}
-      label={t.process.label}
-      steps={t.process.steps}
-      cta={t.process.cta}
+    {/* ── REZULTATE — the lavadental #showcase replica: the section UNMASKS
+        upward over Echipa's dark tail while scrolling (CSS scroll-driven
+        overlay in globals.css), then the smile grid with treatment chips ── */}
+    <SmilesShowcase
+      title={t.results.title}
+      more={t.results.more}
+      tiles={t.results.tiles}
+      images={RESULT_IMAGES}
       serif={serifFont}
     />
 
-    {/* ── ÎNTREBĂRI FRECVENTE — small, quiet FAQ right before the footer ── */}
-    <FaqSection faq={t.faq} serif={serifFont} />
+    {/* ── DRUMUL TĂU — the mosaicist "Our Process" timeline, replicated exactly
+        (dark #161516 sheet, sticky-pinned steps, red centre progress line) ── */}
+    <ConsultationTimeline
+      title={t.process.title}
+      label={t.process.label}
+      steps={t.process.steps}
+      serif={serifFont}
+    />
+
 
     {/* ── PREFOOTER image + animated FOOTER (rises over it, circular top) ── */}
-    <SiteFooter footer={t.footer} book={t.book} serif={serifFont} />
+    <SiteFooter footer={t.footer} serif={serifFont} />
     </>
   );
 }
