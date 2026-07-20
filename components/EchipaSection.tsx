@@ -45,6 +45,7 @@ const ROSE_DEEP = "#161516"; // solid surface (also the portrait backing)
 const BG = "#161516";
 
 
+
 const cl = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
 const sm = (x: number, a: number, b: number) => cl((x - a) / (b - a));
 
@@ -72,9 +73,11 @@ export default function EchipaSection({
   serif: string;
   dr1Ref: RefObject<HTMLDivElement>;
 }) {
-  // mobile (≤860): photo becomes a full-width top band, the name rides its
-  // bottom edge, bio+services stack below; ALL scroll mechanics (pin, wipes,
-  // crossfades, zoom-settle, sheets) run identically on both layouts.
+  // mobile (≤860): a FULL-SCREEN portrait filling the pinned frame, with the
+  // name → short muted caption → that doctor's service rows stacked over its
+  // darkened lower half. No section title (dropped per user). The index and the
+  // candid shot stay hidden; the service rows are the SAME rows as desktop. ALL
+  // scroll mechanics (pin, wipes, crossfades, zoom-settle, sheets) run identically.
   const isM = useIsMobile();
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -88,6 +91,35 @@ export default function EchipaSection({
     setSheetOpen(true);
   };
   const closeSheet = () => setSheetOpen(false);
+
+  // A doctor's four services as hairlined ↗ rows, each opening the bottom sheet.
+  // Shared verbatim by BOTH layouts — desktop's right column and (per user) the
+  // mobile stack under the caption — so the two can never drift apart.
+  const serviceRows = (doc: Doctor) =>
+    doc.services.map((s, si) => (
+      <div
+        key={si}
+        onClick={() => openSheet(`0${si + 1}`, s)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === "Enter" && openSheet(`0${si + 1}`, s)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "14px",
+          padding: isM ? "9px 0" : "clamp(14px,2.2vh,22px) 0", // roomy rows, per the screenshot
+          borderTop: `1px solid ${LINE}`,
+          borderBottom: si === doc.services.length - 1 ? `1px solid ${LINE}` : undefined,
+          cursor: "pointer",
+        }}
+      >
+        <span style={{ fontFamily: FONT, fontSize: isM ? "clamp(13px,3.5vw,15px)" : "clamp(14px,0.95vw,18px)", fontWeight: 500, lineHeight: 1.3, color: "#fdf0f2" }}>{s.name}</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flex: "none" }}>
+          <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="#fdf0f2" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+    ));
 
   // freeze the (Lenis) page scroll while the sheet is open; Escape closes it
   const lenis = useLenis();
@@ -203,7 +235,9 @@ export default function EchipaSection({
         {/* width is 50vw, NOT 50%: the sticky's 100% excludes the scrollbar, so 50%
             would leave the dark half a scrollbar-width wider than the photo (the
             width-world gotcha — same fix as the hero's video insets) */}
-        <div style={{ position: "absolute", left: 0, top: 0, width: isM ? "100vw" : "50vw", height: isM ? "44vh" : "100%", overflow: "hidden", zIndex: 1 }}>
+        {/* portrait: on mobile it fills the ENTIRE pinned frame (full-screen,
+            edge to edge) — the title and the name both ride over it */}
+        <div style={{ position: "absolute", left: 0, top: 0, width: isM ? "100vw" : "50vw", height: "100%", overflow: "hidden", zIndex: 1 }}>
           {/* portrait layers back onto the DARK sheet color (not the light collage
               neutral) — a light backing is what read as the "white line" when a
               settled image rounded a subpixel short of its box */}
@@ -222,6 +256,31 @@ export default function EchipaSection({
           </div>
         </div>
 
+        {/* MOBILE legibility scrim — the reference's photo happens to be dark where
+            its name sits; our portraits are COLOUR and can be light exactly there
+            (Dr. Elena's white trousers ran straight through "Caracaș"). A gradient
+            confined to the bottom third only, so it never "swallows" the photo the
+            way the old full ink fade did. Sits above the photo (z1), below the
+            per-doctor text (z10). */}
+        {isM && (
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              bottom: 0,
+              width: "100vw",
+              // deep enough to sit behind the whole stack (name → caption → the
+              // four service rows), whose top lands at ~56% of the frame
+              height: "50%",
+              zIndex: 2,
+              pointerEvents: "none",
+              background:
+                "linear-gradient(to bottom, rgba(22,21,22,0) 0%, rgba(22,21,22,0.42) 32%, rgba(22,21,22,0.90) 100%)",
+            }}
+          />
+        )}
+
+
         {/* ── per-doctor content (cross-fades with the image wipe) ── */}
         {doctors.map((doc, idx) => (
           <div
@@ -239,22 +298,72 @@ export default function EchipaSection({
                 position: "absolute",
                 left: 0,
                 width: "100vw", // centered on the WINDOW midpoint = the photo seam (see 50vw note)
-                bottom: isM ? "auto" : "3.5%", // hugs the bottom; room for the ș descenders
-                top: isM ? "calc(44vh - 1.1em)" : undefined, // mobile: straddles the photo's bottom edge
+                bottom: isM ? "5.5%" : "3.5%", // hugs the bottom; room for the ș descenders
                 zIndex: 2,
                 textAlign: "center",
-                fontFamily: FONT,
-                fontWeight: 500,
-                fontSize: isM ? "clamp(34px, 11.5vw, 60px)" : "clamp(48px, 7.5vw, 156px)",
-                lineHeight: 0.85,
-                letterSpacing: "-0.03em",
                 color: "#fdf0f2",
-                pointerEvents: "none",
+                // Desktop: nothing here is interactive, so kill taps outright.
+                // Mobile: the service rows below ARE interactive, so this must stay
+                // UNSET and inherit — the scroll driver turns pointer-events off on
+                // the whole per-doctor wrapper when that doctor is faded out, and a
+                // descendant re-enabling "auto" would defeat that and let an
+                // invisible doctor's rows swallow the taps (it did exactly that).
+                // The name and caption opt out individually instead.
+                pointerEvents: isM ? undefined : "none",
               }}
             >
-              {doc.name[0]}
-              <br />
-              {doc.name[1]}
+              <div
+                className="cd-team-name"
+                style={{
+                  fontFamily: FONT, // Inter Tight 500 for every word — no italic, no marker (per user)
+                  fontWeight: 500,
+                  fontSize: isM ? "clamp(34px, 11.5vw, 60px)" : "clamp(48px, 7.5vw, 156px)",
+                  lineHeight: 0.85,
+                  letterSpacing: "-0.03em",
+                  pointerEvents: "none", // the giant name must never eat a tap
+                }}
+              >
+                {doc.name[0]}
+                <br />
+                {doc.name[1]}
+              </div>
+              {/* MOBILE caption — the reference's small muted centred paragraph,
+                  sitting on the photo's dark lower region under the name. This is
+                  the doctor's bio; on mobile it REPLACES the bold bio + service
+                  rows, which are hidden below (per user). */}
+              {isM && (
+                <div
+                  className="cd-team-caption"
+                  style={{
+                    marginTop: "clamp(12px, 2vh, 20px)",
+                    // Narrower column than the rows so all three bios wrap to the
+                    // SAME 3 lines (at 7% padding Dr. Elena's shorter bio fell to 2,
+                    // which dropped her name 21px below the other two). minHeight
+                    // locks that height in, so even if a translation runs short the
+                    // names stay pinned to one position.
+                    padding: "0 13%",
+                    minHeight: "calc(3 * 1.45em)",
+                    fontFamily: FONT,
+                    fontSize: "clamp(13px, 3.6vw, 16px)",
+                    fontWeight: 400,
+                    lineHeight: 1.45,
+                    letterSpacing: "-0.01em",
+                    color: MUTED,
+                    pointerEvents: "none",
+                  }}
+                >
+                  {doc.bio}
+                </div>
+              )}
+              {/* MOBILE service rows — the same rows desktop shows in its right
+                  column, restored here directly under the caption (per user).
+                  pointerEvents re-enabled: the wrapper above disables them so the
+                  big name never eats taps, but these rows DO open the sheet. */}
+              {isM && (
+                <div style={{ marginTop: "clamp(14px, 2.4vh, 24px)", padding: "0 6%", textAlign: "left", pointerEvents: "auto" }}>
+                  {serviceRows(doc)}
+                </div>
+              )}
             </div>
 
             {/* bottom-left INDEX — "Echipa noastră:" + the three doctors (this one active).
@@ -290,11 +399,14 @@ export default function EchipaSection({
             <div
               style={{
                 position: "absolute",
-                left: isM ? "4%" : "70.8%",
-                top: isM ? "calc(44vh + clamp(56px, 9vh, 90px))" : "13%",
-                width: isM ? "92%" : "26.9%",
+                left: "70.8%",
+                top: "13%",
+                width: "26.9%",
                 zIndex: 4,
-                display: "flex",
+                // mobile drops the whole right column: the bio is re-rendered as the
+                // caption under the name above, and the candid + service rows are
+                // gone (per user — the reference shows name + caption only)
+                display: isM ? "none" : "flex",
                 flexDirection: "column",
               }}
             >
@@ -331,32 +443,7 @@ export default function EchipaSection({
                 </div>
                 {/* the doctor's services — hairlined rows with ↗ arrows; each opens
                     the service bottom-sheet (same pattern as ServicesSection) */}
-                <div style={{ flex: "1 1 0" }}>
-                  {doc.services.map((s, si) => (
-                    <div
-                      key={si}
-                      onClick={() => openSheet(`0${si + 1}`, s)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => e.key === "Enter" && openSheet(`0${si + 1}`, s)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: "14px",
-                        padding: isM ? "11px 0" : "clamp(14px,2.2vh,22px) 0", // roomy rows, per the screenshot
-                        borderTop: `1px solid ${LINE}`,
-                        borderBottom: si === doc.services.length - 1 ? `1px solid ${LINE}` : undefined,
-                        cursor: "pointer",
-                      }}
-                    >
-                      <span style={{ fontFamily: FONT, fontSize: "clamp(14px,0.95vw,18px)", fontWeight: 500, lineHeight: 1.3, color: "#fdf0f2" }}>{s.name}</span>
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flex: "none" }}>
-                        <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="#fdf0f2" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                  ))}
-                </div>
+                <div style={{ flex: "1 1 0" }}>{serviceRows(doc)}</div>
               </div>
             </div>
           </div>
