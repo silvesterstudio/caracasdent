@@ -29,3 +29,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# responsive-iteration screenshots (regenerate with scripts/shoot*.mjs)
+/shots

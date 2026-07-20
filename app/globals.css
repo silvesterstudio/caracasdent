@@ -319,6 +319,12 @@ a:hover {
 .cd-foot-link:hover {
   opacity: 0.62;
 }
+/* mobile-only language toggle inside the menu sheet (hidden on desktop, where
+   RO/RU lives in the header) */
+.cd-menu-lang {
+  display: none;
+}
+
 /* the footer link hover: the label ROLLS UP and its clone rises from below */
 .cd-roll {
   position: relative;
@@ -367,6 +373,279 @@ button:hover > .cd-roll > span,
     padding-left: 0;
     border-top: 1px solid rgba(253, 240, 242, 0.28);
     padding-top: 18px;
+  }
+}
+
+/* ═══ RESPONSIVE LAYER (≤860px, ≤600px) ════════════════════════════════════
+   ADDITIVE ONLY: these rules override inline desktop styles (hence !important)
+   below the breakpoints and change NOTHING at desktop widths. All animation
+   systems (scroll drivers, sticky pins, sweeps, sheets) stay untouched —
+   only geometry, font floors and stacking direction adapt. */
+@media (max-width: 860px) {
+  /* header: a clean two-group bar — logo + Meniu left, RO/RU right. The
+     "Contactează-ne" button retires on mobile (contact lives in the hero's
+     full-width CTA, the menu, and the footer form) */
+  .cd-nav {
+    padding: 10px 16px !important;
+  }
+  .cd-nav-cta {
+    display: none !important;
+  }
+  /* logo LEFT, Meniu RIGHT: the left group stretches across the bar; the whole
+     right group (RO/RU + CTA) retires — the language toggle moves into the
+     menu sheet (.cd-menu-lang below) */
+  .cd-nav > div:nth-child(2) {
+    width: 100%;
+    justify-content: space-between !important;
+  }
+  .cd-nav > div:nth-child(3) {
+    display: none !important;
+  }
+  .cd-menu-lang {
+    display: flex !important;
+  }
+
+  /* hero (mosaicist mobile structure): giant two-line headline bottom-left,
+     full-width sub under it, then a BIG full-width CTA at the very bottom */
+  .cd-hero-line {
+    display: none !important; /* the reference has no hairline on mobile */
+  }
+  .cd-hero-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 18px !important;
+  }
+  .cd-hero-row h1 {
+    font-size: 13vw !important;
+  }
+  .cd-hero-side {
+    max-width: 100% !important;
+    width: 100% !important;
+    align-items: stretch !important;
+    gap: 22px !important;
+  }
+  .cd-hero-sub {
+    font-size: 16px !important;
+    line-height: 140% !important;
+  }
+  .cd-hero-cta {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 13px 20px !important; /* full-width but SLIM (per user: width = thickness) */
+    font-size: 15px !important;
+    border-radius: 4px !important;
+  }
+
+  /* ── SECTION TITLES: one voice on mobile ──────────────────────────────
+     Every section heading takes "Ce oferim?"'s size (its own clamp, so the
+     two stay identical at every width) and the SAME 4.5vh gap down to the
+     content below. Before this they were all over the place at 390px:
+     Cine 32.8px/gap 0, Ce oferim 40px/38px, Rezultate 26px/56px,
+     Drumul tău 60.6px/0. Each keeps its own character (marker sweep,
+     uppercase) — only size + gap are unified. */
+  .cd-cine-heading,
+  .cd-showcase-title,
+  .cd-tl-title {
+    font-size: clamp(40px, 5.3vw, 104px) !important;
+    line-height: 0.98 !important;
+    letter-spacing: -0.03em !important;
+  }
+  .cd-showcase-title,
+  .cd-tl-title {
+    margin-bottom: 4.5vh !important;
+  }
+  /* the ≥720px one-row rule would force this now-larger title into a single
+     nowrap line far wider than a 720–860px screen — let it wrap on mobile */
+  .cd-showcase-title {
+    white-space: normal !important;
+  }
+  /* "Drumul tău": the desktop treatment is a CENTERED 15.54vw giant with the
+     "(în 3 pași)" label absolutely placed at 63.64% — at the shared size that
+     label landed ON TOP of the word. Left-align the header like every other
+     mobile section and let the label flow as a baseline-aligned sibling. */
+  .cd-tl-head {
+    justify-content: flex-start !important;
+    align-items: baseline !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    padding: 60px 4% 0 !important;
+  }
+  .cd-tl-label {
+    position: static !important;
+    white-space: nowrap !important;
+  }
+
+  /* "Cine suntem?" — mobile reading order inside the pinned 100vh panel:
+       heading → scroll-revealed chunk (same char-reveal driver as desktop,
+       just bigger type) → the 4-strip collage, bottom-pinned as a near-SQUARE
+       full-width block so it reads as the one reconstructed photo (1:1 with
+       the desktop build — strips, gaps, pops, parallax and wipes untouched).
+     The JS auto-fit/lineHeight-stretch and the collage top/height px writes
+     are inline styles — every !important below beats them on mobile. */
+  .cd-cine-left {
+    width: 92% !important;
+    height: 100% !important;
+  }
+  /* size comes from the shared section-title rule above — do NOT re-declare
+     font-size here (a later equal-specificity !important would win and silently
+     un-unify the headings) */
+  .cd-cine-heading {
+    top: 6.5% !important;
+  }
+  /* the collage is a TRUE 1:1 SQUARE block (per user) — the same proportion the
+     44%-wide × 72%-tall desktop column works out to, so the 4 strips rebuild the
+     one photo at the same shape. aspect-ratio (not a vw height) keeps it exactly
+     square regardless of the scrollbar. A small fixed bottom offset instead of a
+     4.5% one keeps the space the chunk gets consistent across phone heights. */
+  .cd-cine-collage {
+    top: auto !important;
+    bottom: 16px !important;
+    /* FULL column width, left-aligned — the user's layout. Do NOT shrink or
+       centre this to buy the chunk more type size; that changes the design.
+       Capping WIDTH (never height) is what keeps it exactly 1:1; the vh term
+       only stops an uncapped square swallowing wide-but-short panels (at
+       780×900 a full-width one would be 718px). */
+    width: min(100%, 52vh) !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1 !important;
+  }
+  .cd-cine-right {
+    left: 4% !important;
+    width: 92% !important;
+    top: 0 !important;
+    height: 100% !important;
+  }
+  /* NOTE: font-size / line-height are deliberately NOT declared here. A CSS
+     clamp cannot close the gap to the collage, because paragraph height moves
+     in whole ROW jumps — between two neighbouring clamp values the text flips
+     6→7 rows and either leaves ~40px of dead space or overlaps the photo. The
+     JS auto-fit in measure() owns mobile sizing instead: it reads the square's
+     real top edge and grows the type until the last row sits GAP px above it.
+     Any !important here would beat that inline style and break the fit. */
+  .cd-cine-chunk {
+    top: 15.5% !important;
+    /* Ragged rows ("some rows full, some only half") are what big type in a
+       narrow column does — at ~11 words per row one long word like
+       "stomatologie" pushes to the next line and leaves a half-empty one.
+       Justify makes every row reach BOTH edges; auto-hyphenation (html
+       lang="ro") lets long Romanian words split so justify stretches word
+       spaces a little instead of tearing rivers through the paragraph. */
+    text-align: justify !important;
+    hyphens: auto !important;
+    -webkit-hyphens: auto !important;
+  }
+
+  /* expanded menu: ONE screen, NO scrolling — everything is sized in vh so the
+     sheet self-fits any phone height. Structure (top → bottom):
+       "Servicii:" + 2×2 compact cards
+       big serif links (the star — they take the remaining space)
+       "Formular pacient" hairline row
+       bottom bar: RO/RU left | social circles right
+     (column + order, NOT column-reverse — a scrollable column-reverse container
+     starts scrolled to the BOTTOM, which opened the menu mid-content) */
+  .cd-menu-inner {
+    flex-direction: column !important;
+    /* fits WITHOUT scrolling on phones (all sizes are vh-scaled); auto is a
+       safety valve ONLY for extreme short-landscape viewports — hidden would
+       amputate the bottom bar there */
+    overflow-y: auto !important;
+    padding: 60px 20px 16px !important;
+    gap: 12px !important;
+  }
+  /* right zone (cards + links) fills the sheet; the links block grows and
+     centers itself in the leftover height (no dead gap, no scrolling) */
+  .cd-menu-inner > div:last-child {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+  }
+  .cd-menu-cards {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px 10px !important;
+    margin-top: 8px !important;
+  }
+  /* card photos: vh-sized so two rows never eat the sheet on short phones */
+  .cd-menu-card > div:first-child {
+    height: clamp(54px, 9.5vh, 92px) !important;
+  }
+  .cd-menu-card > div:last-child {
+    font-size: 11px !important;
+    margin-top: 4px !important;
+  }
+  /* one uniform vh-scaled size for the "Servicii:" heading and the big links */
+  .cd-menu-inner .cd-menu-big {
+    font-size: clamp(22px, 4.2vh, 38px) !important;
+    line-height: 1.16 !important;
+  }
+  .cd-menu-links {
+    grid-template-columns: 1fr !important;
+    row-gap: clamp(0px, 0.6vh, 6px) !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    align-content: center !important;
+  }
+  /* left rail → compact bottom cluster: the utility row spans full width on
+     top (order -1), then RO/RU and the socials share one row */
+  .cd-menu-left {
+    flex: none !important;
+    order: 2;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+  }
+  .cd-menu-left > div:last-child {
+    flex: 1 1 100% !important;
+    order: -1;
+  }
+  .cd-menu-util {
+    padding: 10px 0 !important;
+    font-size: 13px !important;
+  }
+  .cd-menu-left button[aria-label="Instagram"],
+  .cd-menu-left button[aria-label="Facebook"] {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  /* services: 4-card grid → 2×2 (cards keep their hover zoom + sheets) */
+  .cd-svc-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    /* SEAM: pull the coral block up so the cards' bottom edge lands exactly
+       HALFWAY down the coral's top padding (per user). That padding is
+       `clamp(180px,29.9vw,460px)*0.14 + clamp(56px,8vw,140px)` on the coral
+       block, so half of it is the overlap we want — mirroring the expression
+       keeps the two in step at every width. Desktop's -0.14 card-height pull
+       only reached 25px of an 81px padding at 390. */
+    margin-bottom: calc((clamp(180px, 29.9vw, 460px) * 0.14 + clamp(56px, 8vw, 140px)) / -2) !important;
+  }
+  /* the wide hero card: its 1206/285 ratio + 200px min-height would FORCE an
+     846px width on phones (the site's only horizontal overflow) — retile it */
+  .cd-svc-hero {
+    aspect-ratio: 3 / 2 !important;
+    min-height: 0 !important;
+  }
+
+  /* timeline: the centre track/squares belong to the 3-column desktop stage */
+  .cd-tl-line {
+    display: none !important;
+  }
+}
+/* wide-but-short mobile widths (small tablets / half-screen windows): the 2×2
+   menu cards become extreme letterbox crops — one 4-across row reads better
+   and gives a full card-row of height back to the links */
+@media (max-width: 860px) and (min-width: 640px) {
+  .cd-menu-cards {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+@media (max-width: 600px) {
+  /* coral service rows: free the number column so titles never squeeze */
+  .cd-svc-row {
+    grid-template-columns: auto 1fr auto !important;
+    gap: 14px !important;
   }
 }
 

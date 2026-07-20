@@ -168,7 +168,7 @@ export default function ServicesSection({
 
         {/* hero card — full width, wide photo, single-line title; opens its sheet */}
         <div
-          className="cd-svc-card"
+          className="cd-svc-card cd-svc-hero"
           onClick={() => openSheet("01", cards[0])}
           role="button"
           tabIndex={0}
@@ -190,6 +190,7 @@ export default function ServicesSection({
         {/* portrait cards — 4 columns, pulled DOWN over the coral block (the seam
             crosses them at ~86% of their height, like the reference) */}
         <div
+          className="cd-svc-grid"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(4, 1fr)",

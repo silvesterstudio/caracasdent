@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { useLenis } from "lenis/react";
 import ImageSlot from "./ImageSlot";
+import { useIsMobile } from "./useIsMobile";
 
 /**
  * EchipaSection — the team, as its OWN 300vh scroll section (a pinned 100vh viewport).
@@ -71,6 +72,11 @@ export default function EchipaSection({
   serif: string;
   dr1Ref: RefObject<HTMLDivElement>;
 }) {
+  // mobile (≤860): photo becomes a full-width top band, the name rides its
+  // bottom edge, bio+services stack below; ALL scroll mechanics (pin, wipes,
+  // crossfades, zoom-settle, sheets) run identically on both layouts.
+  const isM = useIsMobile();
+
   const rootRef = useRef<HTMLDivElement>(null);
   const imgBRef = useRef<HTMLDivElement>(null);
   // ── bottom-sheet popup for a doctor's service (same pattern as ServicesSection:
@@ -197,7 +203,7 @@ export default function EchipaSection({
         {/* width is 50vw, NOT 50%: the sticky's 100% excludes the scrollbar, so 50%
             would leave the dark half a scrollbar-width wider than the photo (the
             width-world gotcha — same fix as the hero's video insets) */}
-        <div style={{ position: "absolute", left: 0, top: 0, width: "50vw", height: "100%", overflow: "hidden", zIndex: 1 }}>
+        <div style={{ position: "absolute", left: 0, top: 0, width: isM ? "100vw" : "50vw", height: isM ? "44vh" : "100%", overflow: "hidden", zIndex: 1 }}>
           {/* portrait layers back onto the DARK sheet color (not the light collage
               neutral) — a light backing is what read as the "white line" when a
               settled image rounded a subpixel short of its box */}
@@ -233,12 +239,13 @@ export default function EchipaSection({
                 position: "absolute",
                 left: 0,
                 width: "100vw", // centered on the WINDOW midpoint = the photo seam (see 50vw note)
-                bottom: "3.5%", // hugs the bottom; room for the ș descenders
+                bottom: isM ? "auto" : "3.5%", // hugs the bottom; room for the ș descenders
+                top: isM ? "calc(44vh - 1.1em)" : undefined, // mobile: straddles the photo's bottom edge
                 zIndex: 2,
                 textAlign: "center",
                 fontFamily: FONT,
                 fontWeight: 500,
-                fontSize: "clamp(48px, 7.5vw, 156px)",
+                fontSize: isM ? "clamp(34px, 11.5vw, 60px)" : "clamp(48px, 7.5vw, 156px)",
                 lineHeight: 0.85,
                 letterSpacing: "-0.03em",
                 color: "#fdf0f2",
@@ -254,7 +261,7 @@ export default function EchipaSection({
                 Reference: ~0.85-0.9vw regular, active pure white, ~42px air under the
                 label, block ending ~4.5% from the bottom. */}
             {/* bottom-left INDEX — on the site's 4% grid; the ACTIVE doctor reads coral */}
-            <div style={{ position: "absolute", left: "4%", bottom: "4.5%", zIndex: 3, pointerEvents: "none" }}>
+            <div style={{ position: "absolute", left: "4%", bottom: "4.5%", zIndex: 3, pointerEvents: "none", display: isM ? "none" : undefined }}>
               <div style={{ fontFamily: FONT, fontSize: "clamp(13px,0.85vw,17px)", fontWeight: 400, color: MUTED, marginBottom: "clamp(10px,1.8vh,20px)" }}>
                 Echipa noastră:
               </div>
@@ -280,12 +287,22 @@ export default function EchipaSection({
             {/* RIGHT column — back at the far right (x 70.8%, w 26.9%, per user),
                 keeping the screenshot's voice scaled to the narrow column: semibold
                 white lead, generous air, then candid photo + services list. */}
-            <div style={{ position: "absolute", left: "70.8%", top: "13%", width: "26.9%", zIndex: 4, display: "flex", flexDirection: "column" }}>
+            <div
+              style={{
+                position: "absolute",
+                left: isM ? "4%" : "70.8%",
+                top: isM ? "calc(44vh + clamp(56px, 9vh, 90px))" : "13%",
+                width: isM ? "92%" : "26.9%",
+                zIndex: 4,
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
               {/* bio — the screenshot's bold white headline voice */}
               <div
                 style={{
                   fontFamily: FONT,
-                  fontSize: "clamp(16px, 1.4vw, 27px)",
+                  fontSize: isM ? "clamp(14px, 4vw, 17px)" : "clamp(16px, 1.4vw, 27px)",
                   fontWeight: 600,
                   lineHeight: 1.3,
                   letterSpacing: "-0.015em",
@@ -296,8 +313,9 @@ export default function EchipaSection({
               </div>
               {/* candid row sits WELL below the lead (screenshot has generous air),
                   with a wide gutter between the photo and the list */}
-              <div style={{ display: "flex", gap: "clamp(16px,2.2vw,46px)", alignItems: "flex-start", marginTop: "clamp(22px,4vh,52px)" }}>
-                {/* candid stays COLOR (like the reference) — tall 2:3, sharp corners */}
+              <div style={{ display: "flex", gap: "clamp(16px,2.2vw,46px)", alignItems: "flex-start", marginTop: isM ? "16px" : "clamp(22px,4vh,52px)" }}>
+                {/* candid stays COLOR (like the reference) — tall 2:3, sharp corners.
+                    Hidden on mobile: the 100vh pinned frame has no room for it. */}
                 <div
                   style={{
                     width: "44%",
@@ -306,6 +324,7 @@ export default function EchipaSection({
                     overflow: "hidden",
                     background: IMG_BG,
                     flex: "none",
+                    display: isM ? "none" : undefined,
                   }}
                 >
                   <ImageSlot bg={IMG_BG} src={candids[idx]} label={`${doc.name[0]} ${doc.name[1]}`} />
@@ -325,7 +344,7 @@ export default function EchipaSection({
                         alignItems: "center",
                         justifyContent: "space-between",
                         gap: "14px",
-                        padding: "clamp(14px,2.2vh,22px) 0", // roomy rows, per the screenshot
+                        padding: isM ? "11px 0" : "clamp(14px,2.2vh,22px) 0", // roomy rows, per the screenshot
                         borderTop: `1px solid ${LINE}`,
                         borderBottom: si === doc.services.length - 1 ? `1px solid ${LINE}` : undefined,
                         cursor: "pointer",

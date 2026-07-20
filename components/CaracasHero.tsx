@@ -70,11 +70,14 @@ const CINE_IMAGES = [
 // ── expanded-menu service cards (B&W squares like the reference; UNIQUE photos,
 // content VERIFIED via Unsplash alt text — the previous batch was picked blind
 // and turned out to be a barber / a PlayStation / random portraits, per user)
+// ORDER MATTERS: these pair with services cards[1..4] = Igienă profesională,
+// Fațete ceramice, Implanturi dentare, All-on-X (was mismatched — implant model
+// under "Igienă" etc.)
 const MENU_SERVICE_IMAGES = [
-  U("1593022356769-11f762e25ed9", 600, 600), // Implantologie — "dental implant model with teeth"
-  U("1720685193964-4529228a33c1", 600, 600), // Ortodonție — "close up of a tooth with braces"
-  U("1606811971618-4486d14f3f99", 600, 600), // Terapie — "dental exam with mirror and tool"
-  U("1670250492416-570b5b7343b1", 600, 600), // Estetică dentară — "a person's mouth with teeth"
+  U("1606811971618-4486d14f3f99", 600, 600), // Igienă profesională — "dental exam with mirror and tool"
+  U("1670250492416-570b5b7343b1", 600, 600), // Fațete ceramice — "a person's mouth with teeth"
+  U("1593022356769-11f762e25ed9", 600, 600), // Implanturi dentare — "dental implant model with teeth"
+  U("1720685193942-5a1c5ac7fd80", 600, 600), // All-on-X — "a model of teeth" (full arch)
 ];
 // ── "after" result photos: bright, clean, repaired smiles for the Rezultate
 // showcase — 7 photos (the grid's other 3 cells are VIDEOS) and, like every
@@ -157,6 +160,7 @@ type Copy = {
     copyright: string; // studio name; the "Copyright © 2026" prefix is rendered
     developedBy: string;
     developer: string;
+    developerPhone: string;
   };
 };
 
@@ -353,7 +357,8 @@ const COPY: Record<"ro" | "ru", Copy> = {
       quote: "„Zâmbetul este fericirea care se află chiar sub nasul tău” — Tom Wilson",
       copyright: "Caracaș Dental Clinic",
       developedBy: "Dezvoltat de",
-      developer: "Silvester Studio",
+      developer: "SilvesterStudio",
+      developerPhone: "+373 69647357",
     },
     doctors: [
       {
@@ -628,7 +633,8 @@ const COPY: Record<"ro" | "ru", Copy> = {
       quote: "«Улыбка — это счастье прямо под твоим носом» — Том Уилсон",
       copyright: "Caracaș Dental Clinic",
       developedBy: "Разработано",
-      developer: "Silvester Studio",
+      developer: "SilvesterStudio",
+      developerPhone: "+373 69647357",
     },
     doctors: [
       {
@@ -892,7 +898,47 @@ export default function CaracasHero({
       // clamp so it matches "Ce oferim?" exactly (per user).
       const ch = chunkRef.current;
       const H = window.innerHeight;
-      if (ch && H > 0) {
+      // ── MOBILE (≤860) auto-fit: the chunk fills the space between its own top
+      //    and the TOP EDGE OF THE SQUARE COLLAGE, so the paragraph's last row
+      //    lands just above the photo instead of floating with dead space under
+      //    it (the user's "remove the gap"). A CSS clamp can't do this: paragraph
+      //    height moves in whole ROW jumps, so neighbouring clamp values give
+      //    either ~40px of slack or an overlap. CSS owns the collage geometry
+      //    (1:1 aspect-ratio, bottom-pinned) — we only READ it here, so there's
+      //    no circular dependency. Residual row-jump slack is taken up by a
+      //    line-height stretch, the same trick the desktop branch uses below. ──
+      if (ch && H > 0 && window.innerWidth <= 860) {
+        const colM = collageAreaRef.current;
+        const GAP = 14; // breathing room between the last row and the photo
+        const avail = colM ? colM.offsetTop - ch.offsetTop - GAP : H * 0.4;
+        ch.style.lineHeight = "1.28";
+        let fs = 22;
+        ch.style.fontSize = fs + "px";
+        let h = ch.scrollHeight;
+        if (h > 0 && avail > 0) {
+          fs = Math.min(60, Math.max(15, (fs * avail) / h)); // first guess
+          ch.style.fontSize = fs + "px";
+          h = ch.scrollHeight;
+          let grow = 0;
+          while (h <= avail && fs < 60 && grow < 30) {
+            fs *= 1.03;
+            ch.style.fontSize = fs + "px";
+            h = ch.scrollHeight;
+            grow++;
+          }
+          let guard = 0;
+          while (h > avail && fs > 15 && guard < 30) {
+            fs *= 0.97;
+            ch.style.fontSize = fs + "px";
+            h = ch.scrollHeight;
+            guard++;
+          }
+          if (h > 0 && h < avail) {
+            const lh = Math.min(1.5, 1.28 * (avail / h));
+            ch.style.lineHeight = lh.toFixed(4);
+          }
+        }
+      } else if (ch && H > 0) {
         ch.style.fontSize = "clamp(40px, 5.3vw, 104px)"; // re-apply base each measure
         ch.style.lineHeight = "1.14";
         let fs = parseFloat(getComputedStyle(ch).fontSize);
@@ -975,6 +1021,23 @@ export default function CaracasHero({
         // clamp: the last row must FINISH revealing before the scrub ends (p=1), otherwise
         // its final chars would freeze mid-reveal as the section scrolls away.
         pVisEnd = Math.min(0.99, numRows > 0 ? pVis[numRows - 1] + Math.max(0.02, lastWin) : 0.22);
+
+        // MOBILE (≤860): the chunk sits HIGH in the panel (top ~15%, not filling it),
+        // so with the on-entry pacing above every row has entered — and finished
+        // revealing — by ~half the rise, while the text is still hugging the bottom
+        // edge of the screen. By the time the reader looks at it, it's all ink
+        // ("already revealed"). Re-pace: hold at grey until the WHOLE chunk is on
+        // screen, then sweep the rows across the remaining scrub, so the reveal is
+        // the thing you watch while the panel is up.
+        if (window.innerWidth <= 860 && numRows > 0 && ch) {
+          const gpAll = Math.min(1, (ch.offsetTop + ch.offsetHeight) / H);
+          const pStart = 0.091 + gpAll * 0.909;
+          const pEnd = 0.985;
+          for (let k = 0; k < numRows; k++) {
+            pVis[k] = pStart + (k / numRows) * (pEnd - pStart);
+          }
+          pVisEnd = 0.99;
+        }
       }
 
       // position the image stack so the whitespace ABOVE it (below the "Scopul
@@ -1329,6 +1392,7 @@ export default function CaracasHero({
         (the child div below) so they stay readable over any section, light or dark. ── */}
     <div
       ref={navRef}
+      className="cd-nav"
       style={{
         position: "fixed",
         top: 0,
@@ -1414,7 +1478,7 @@ export default function CaracasHero({
         {/* Contact — EXACTLY the hero CTA design: solid rectangle (3px), plain ↗ arrow —
             now brand PINK w/ white text (.cd-btn-pink; hover floods white). */}
         <button
-          className="cd-btn-pink"
+          className="cd-btn-pink cd-nav-cta"
           onClick={() => {
             setMenuOpen(false);
             goTo("#formular");
@@ -1473,9 +1537,34 @@ export default function CaracasHero({
       {/* ── main area: LEFT rail (socials + arrowed utility rows, pinned to the bottom)
              | RIGHT zone ("Servicii:" + 4 B&W cards on top, big serif links below).
              Top padding clears the fixed header floating above the sheet. ── */}
-      <div style={{ flex: 1, minHeight: 0, display: "flex", gap: "clamp(24px,4vw,80px)", padding: "clamp(64px,10vh,96px) 44px clamp(20px,4vh,44px)" }}>
+      <div className="cd-menu-inner" style={{ flex: 1, minHeight: 0, display: "flex", gap: "clamp(24px,4vw,80px)", padding: "clamp(64px,10vh,96px) 44px clamp(20px,4vh,44px)" }}>
         {/* LEFT rail */}
-        <div style={{ flex: "0 0 clamp(200px,23vw,340px)", display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: "clamp(22px,4.5vh,48px)" }}>
+        <div className="cd-menu-left" style={{ flex: "0 0 clamp(200px,23vw,340px)", display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: "clamp(22px,4.5vh,48px)" }}>
+          {/* mobile-only language toggle (the header's RO/RU retires ≤860) */}
+          <div className="cd-menu-lang" style={{ gap: "18px" }}>
+            {(["ro", "ru"] as const).map((l) => (
+              <button
+                key={l}
+                onClick={() => setLang(l)}
+                style={{
+                  appearance: "none",
+                  border: 0,
+                  background: "transparent",
+                  cursor: "pointer",
+                  fontFamily: FONT,
+                  fontSize: "15px",
+                  fontWeight: 600,
+                  letterSpacing: "0.08em",
+                  padding: "4px 0",
+                  color: "#fdf0f2",
+                  opacity: lang === l ? 1 : 0.45,
+                  borderBottom: lang === l ? "1.5px solid currentColor" : "1.5px solid transparent",
+                }}
+              >
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
           {/* socials — faint circles (wire real profile URLs later) */}
           <div style={{ display: "flex", gap: "14px" }}>
             <button aria-label="Instagram" style={{ appearance: "none", border: 0, cursor: "pointer", width: "54px", height: "54px", borderRadius: "999px", background: "rgba(238,241,242,0.08)", display: "flex", alignItems: "center", justifyContent: "center", color: "#eef1f2" }}>
@@ -1539,7 +1628,7 @@ export default function CaracasHero({
             >
               {t.nav.services}:
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "clamp(12px,1.4vw,24px)", marginTop: "clamp(14px,3vh,30px)" }}>
+            <div className="cd-menu-cards" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "clamp(12px,1.4vw,24px)", marginTop: "clamp(14px,3vh,30px)" }}>
               {t.services.cards.slice(1).map(({ name }, i) => (
                 <button
                   key={i}
@@ -1560,7 +1649,7 @@ export default function CaracasHero({
           </div>
 
           {/* big editorial links, 2-column grid (reference "About Us / Laboratory / …") */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: "clamp(30px,4vw,90px)", rowGap: "clamp(2px,1vh,12px)" }}>
+          <div className="cd-menu-links" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: "clamp(30px,4vw,90px)", rowGap: "clamp(2px,1vh,12px)" }}>
             {t.menuLinks.map((lnk) => (
               <button
                 key={lnk.target}
@@ -1677,12 +1766,13 @@ export default function CaracasHero({
         >
           {/* tight full-bleed hairline — its own flow row ABOVE the headline, so it can never
               overlap the text (the earlier absolute line cut through the letters). */}
-          <div style={{ width: "100%", height: "1px", background: "rgba(218,211,209,0.42)", marginBottom: "clamp(30px,5.5vh,66px)" }} />
+          <div className="cd-hero-line" style={{ width: "100%", height: "1px", background: "rgba(218,211,209,0.42)", marginBottom: "clamp(30px,5.5vh,66px)" }} />
 
           {/* bottom row: giant headline (left) ⇄ description-over-CTA (right). The right column
               STRETCHES to the headline height so the sub sits at its TOP and the CTA at its
               BOTTOM — the reference composition. */}
           <div
+            className="cd-hero-row"
             style={{
               display: "flex",
               alignItems: "stretch",
@@ -1713,6 +1803,7 @@ export default function CaracasHero({
             </h1>
 
             <div
+              className="cd-hero-side"
               style={{
                 flex: "none",
                 maxWidth: "27ch",
@@ -1724,6 +1815,7 @@ export default function CaracasHero({
               }}
             >
               <p
+                className="cd-hero-sub"
                 style={{
                   margin: 0,
                   fontFamily: FONT,
@@ -1737,7 +1829,7 @@ export default function CaracasHero({
                 {t.hero.sub}
               </p>
               <button
-                className="cd-btn-pink"
+                className="cd-btn-pink cd-hero-cta"
                 onClick={() => goTo("#formular")}
                 style={{
                   pointerEvents: "auto",
@@ -1786,11 +1878,12 @@ export default function CaracasHero({
         >
           <div style={{ position: "relative", width: "100%", height: "100%" }}>
             {/* ── LEFT HALF: big "Scopul nostru" + a mixed-orientation collage ── */}
-            <div style={{ position: "absolute", left: "4%", top: 0, width: "44%", height: "100%" }}>
+            <div className="cd-cine-left" style={{ position: "absolute", left: "4%", top: 0, width: "44%", height: "100%" }}>
               {/* heading in the HERO's type system: Inter Tight 500 with the last word in
                   editorial italic — "Cine *suntem?*", echoing "Misiunea *noastră*" */}
               <div
                 ref={headingRef}
+                className="cd-cine-heading"
                 style={{
                   position: "absolute",
                   left: 0,
@@ -1819,6 +1912,7 @@ export default function CaracasHero({
                   headroom; base top centres that ±36px overscan. */}
               <div
                 ref={collageAreaRef}
+                className="cd-cine-collage"
                 style={{ position: "absolute", left: 0, top: "24%", width: "100%", height: "72%" }}
               >
                 <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -1877,10 +1971,11 @@ export default function CaracasHero({
             </div>
 
             {/* ── RIGHT HALF: the big chunk fills the column; reveals in reading order ── */}
-            <div style={{ position: "absolute", left: "49.5%", top: 0, width: "48.5%", height: "100%" }}>
+            <div className="cd-cine-right" style={{ position: "absolute", left: "49.5%", top: 0, width: "48.5%", height: "100%" }}>
               {/* the chunk in the hero's sans: Inter Tight 500, tight -0.03em, airier rows */}
               <div
                 ref={chunkRef}
+                className="cd-cine-chunk"
                 style={{
                   position: "absolute",
                   left: 0,

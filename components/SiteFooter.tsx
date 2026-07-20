@@ -42,6 +42,7 @@ type FooterCopy = {
   copyright: string;
   developedBy: string;
   developer: string;
+  developerPhone: string;
 };
 
 // Google Maps target for "Ne găsiți aici" — the clinic's real place entry
@@ -358,7 +359,11 @@ export default function SiteFooter({ footer, serif }: { footer: FooterCopy; seri
         </div>
         <div style={{ fontFamily: FONT, fontSize: "13px", color: MUTED }}>
           {footer.developedBy}{" "}
-          <span style={{ color: LIGHT, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>{footer.developer}</span>
+          <span style={{ color: LIGHT, fontWeight: 700, letterSpacing: "0.02em" }}>{footer.developer}</span>
+          {" | "}
+          <a href={`tel:${footer.developerPhone.replace(/\s+/g, "")}`} style={{ color: LIGHT, fontWeight: 600 }}>
+            {footer.developerPhone}
+          </a>
         </div>
       </div>
     </div>

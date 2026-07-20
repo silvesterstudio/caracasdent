@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import ImageSlot from "./ImageSlot";
+import { useIsMobile } from "./useIsMobile";
 
 /**
  * ConsultationTimeline — "Drumul tău", an EXACT replica of mosaicist.com's
@@ -80,6 +81,12 @@ export default function ConsultationTimeline({
   steps: { name: string; desc: string }[];
   serif: string;
 }) {
+  // mobile (≤860): each step stacks (name → image → body), the centre line and
+  // squares retire (they belong to the 3-column stage), pins and parallax turn
+  // off — but the LATCHED activation reveals (colour flips, veil lift, column
+  // fade-in) keep firing exactly as on desktop.
+  const isM = useIsMobile();
+
   const compRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -127,12 +134,17 @@ export default function ConsultationTimeline({
 
       // image parallax (their inline translate3d, 0 → 15.18vw): the image's
       // static top is the ITEM top; the transform carries it down as the item
-      // travels viewport-bottom → out-of-view, so it scrolls ~15% slower
+      // travels viewport-bottom → out-of-view, so it scrolls ~15% slower.
+      // On mobile the images are static in-flow — no transform writes.
       const vh = window.innerHeight;
       const drift = DRIFT_VW * window.innerWidth;
       itemRefs.current.forEach((it, i) => {
         const img = imgRefs.current[i];
         if (!it || !img) return;
+        if (isM) {
+          img.style.transform = "none";
+          return;
+        }
         const ir = it.getBoundingClientRect();
         const travel = vh + img.offsetHeight;
         const p = travel > 0 ? Math.max(0, Math.min(1, (vh - ir.top) / travel)) : 0;
@@ -158,7 +170,7 @@ export default function ConsultationTimeline({
       if (raf) cancelAnimationFrame(raf);
       clearTimeout(t);
     };
-  }, [steps]);
+  }, [steps, isM]);
 
   return (
     // zIndex establishes a stacking context so the z-6 fade masks below stay
@@ -168,8 +180,9 @@ export default function ConsultationTimeline({
     <section id="drumul" style={{ position: "relative", background: BG, zIndex: 3 }}>
       {/* ── headline: giant uppercase Inter Tight with the italic serif label
           floating over it (their .process_h-wrapper) ── */}
-      <div style={{ position: "relative", display: "flex", justifyContent: "center", paddingTop: "7.59vw" }}>
+      <div className="cd-tl-head" style={{ position: "relative", display: "flex", justifyContent: "center", paddingTop: "7.59vw" }}>
         <h2
+          className="cd-tl-title"
           style={{
             fontFamily: FONT,
             fontWeight: 400,
@@ -185,6 +198,7 @@ export default function ConsultationTimeline({
           {title}
         </h2>
         <p
+          className="cd-tl-label"
           style={{
             position: "absolute",
             top: "15.43vw",
@@ -206,8 +220,10 @@ export default function ConsultationTimeline({
 
       {/* ── timeline component (their .timeline_component: 92.85vw, centered) ── */}
       <div ref={compRef} style={{ position: "relative", width: "92.85vw", margin: "0 auto" }}>
-        {/* grey track — full height, 3px, OVER the images (like their z-stack) */}
+        {/* grey track — full height, 3px, OVER the images (like their z-stack);
+            hidden ≤860 via .cd-tl-line (the line belongs to the desktop stage) */}
         <div
+          className="cd-tl-line"
           style={{
             position: "absolute",
             left: "calc(50% - 1.5px)",
@@ -229,31 +245,40 @@ export default function ConsultationTimeline({
             ref={(el) => {
               itemRefs.current[i] = el;
             }}
-            style={{
-              position: "relative",
-              display: "grid",
-              gridTemplateColumns: "28.64% 42.72% 28.64%",
-              padding: "10.12vw 2.63vw",
-            }}
+            style={
+              isM
+                ? { position: "relative", display: "flex", flexDirection: "column", padding: "13vw 5vw 6vw" }
+                : {
+                    position: "relative",
+                    display: "grid",
+                    gridTemplateColumns: "28.64% 42.72% 28.64%",
+                    padding: "10.12vw 2.63vw",
+                  }
+            }
           >
             {/* the step image — 65.87vw × 36.78vw, centered on the line; static
-                top = ITEM top, the scroll driver parallaxes it 0 → 15.18vw down */}
+                top = ITEM top, the scroll driver parallaxes it 0 → 15.18vw down.
+                Mobile: static in flow between name and body, full width. */}
             <div
               ref={(el) => {
                 imgRefs.current[i] = el;
               }}
-              style={{
-                position: "absolute",
-                left: "50%",
-                top: 0,
-                width: "65.87vw",
-                height: "36.78vw",
-                transform: "translate(-50%, 0)",
-                willChange: "transform",
-                zIndex: 1,
-                overflow: "hidden",
-                background: IMG_BG,
-              }}
+              style={
+                isM
+                  ? { position: "relative", width: "100%", height: "56vw", order: 2, marginTop: "14px", overflow: "hidden", background: IMG_BG }
+                  : {
+                      position: "absolute",
+                      left: "50%",
+                      top: 0,
+                      width: "65.87vw",
+                      height: "36.78vw",
+                      transform: "translate(-50%, 0)",
+                      willChange: "transform",
+                      zIndex: 1,
+                      overflow: "hidden",
+                      background: IMG_BG,
+                    }
+              }
             >
               <ImageSlot bg={IMG_BG} dark src={STEP_IMAGES[i % STEP_IMAGES.length]} alt={s.name} label={s.name} />
               {/* the black veil — strong until the item reveals, moody after */}
@@ -278,19 +303,19 @@ export default function ConsultationTimeline({
               ref={(el) => {
                 colRefs.current[i] = el;
               }}
-              style={{ height: "40.47vw", opacity: 0.25, transition: "opacity 0.6s ease", zIndex: 5 }}
+              style={{ height: isM ? "auto" : "40.47vw", order: isM ? 1 : undefined, opacity: 0.25, transition: "opacity 0.6s ease", zIndex: 5 }}
             >
               <div
                 ref={(el) => {
                   nameRefs.current[i] = el;
                 }}
                 style={{
-                  position: "sticky",
-                  top: PIN,
+                  position: isM ? "static" : "sticky",
+                  top: isM ? undefined : PIN,
                   zIndex: 5,
                   fontFamily: serif,
                   fontWeight: 500,
-                  fontSize: "3.957vw",
+                  fontSize: isM ? "clamp(26px, 8vw, 40px)" : "3.957vw",
                   lineHeight: 1.1,
                   letterSpacing: "-0.03em",
                   color: TEXT, // → ACCENT coral once pinned (latched)
@@ -302,8 +327,8 @@ export default function ConsultationTimeline({
             </div>
 
             {/* CENTRE — the square node riding the line (their .timeline_circle:
-                a 1.05vw SQUARE, border-radius 0) */}
-            <div style={{ height: "40.47vw" }}>
+                a 1.05vw SQUARE, border-radius 0); retired on mobile */}
+            <div style={{ height: "40.47vw", display: isM ? "none" : undefined }}>
               <div
                 ref={(el) => {
                   squareRefs.current[i] = el;
@@ -327,16 +352,16 @@ export default function ConsultationTimeline({
               ref={(el) => {
                 rightColRefs.current[i] = el;
               }}
-              style={{ height: "40.47vw", opacity: 0.25, transition: "opacity 0.6s ease", zIndex: 5 }}
+              style={{ height: isM ? "auto" : "40.47vw", order: isM ? 3 : undefined, marginTop: isM ? "14px" : undefined, opacity: 0.25, transition: "opacity 0.6s ease", zIndex: 5 }}
             >
               <div
                 style={{
-                  position: "sticky",
-                  top: PIN,
+                  position: isM ? "static" : "sticky",
+                  top: isM ? undefined : PIN,
                   fontFamily: FONT,
                   fontWeight: 400,
-                  fontSize: "clamp(13px, 1.579vw, 30px)",
-                  lineHeight: 1.3,
+                  fontSize: isM ? "clamp(14px, 4.1vw, 18px)" : "clamp(13px, 1.579vw, 30px)",
+                  lineHeight: isM ? 1.45 : 1.3,
                   letterSpacing: "-0.03em",
                   color: TEXT,
                 }}
