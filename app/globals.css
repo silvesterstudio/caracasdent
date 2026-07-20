@@ -790,6 +790,62 @@ button:hover > .cd-roll > span,
     min-width: 0 !important;
     padding: 15px 20px !important;
   }
+  /* Lower block on the phone (per user): the motto + smile quote come out, and
+     "Orarul săptămânii" sits BESIDE "Detalii de contact" rather than stacked
+     under it — so the two remaining cells go back to a 2-up row with the
+     desktop's vertical seam instead of the ≤560 stacked treatment. The schedule
+     gets the wider track because its rows are white-space:nowrap ("Luni –
+     Vineri" + "8:00 – 19:00" must hold one line), and its inner column gap
+     tightens to buy those rows the room. */
+  .cd-foot-locs {
+    grid-template-columns: 0.92fr 1.08fr !important;
+    gap: 0 !important;
+  }
+  .cd-foot-locs > *:nth-child(3) {
+    display: none !important;
+  }
+  .cd-foot-locs > * + * {
+    border-top: 0 !important;
+    padding-top: 0 !important;
+    border-left: 1px solid rgba(253, 240, 242, 0.28) !important;
+    padding-left: 14px !important;
+  }
+  .cd-foot-locs > *:nth-child(2) > div:last-child {
+    column-gap: 10px !important;
+  }
+  /* Bottom bar: the two credits sit SIDE BY SIDE (per user) instead of stacking.
+     Truly one line each is not possible — at 13px they are ~460px of text in a
+     ~350px row — so each becomes a tidy TWO-line column with a DELIBERATE break
+     (name over clinic, credit over phone) rather than the mid-phrase wrap you
+     get by just letting them run. 98px -> ~54px. The pipe separator is hidden
+     because the phone now starts its own line and it would dangle. */
+  .cd-foot-bar {
+    flex-wrap: nowrap !important;
+    gap: 12px !important;
+    align-items: flex-start !important;
+  }
+  .cd-foot-copy,
+  .cd-foot-dev {
+    font-size: 11px !important;
+    line-height: 1.45 !important;
+  }
+  .cd-foot-dev {
+    text-align: right !important;
+  }
+  .cd-foot-sep {
+    display: none !important;
+  }
+  .cd-foot-dev a {
+    display: block !important;
+  }
+}
+/* the narrowest phones: the schedule's nowrap rows have no slack left at 320px
+   (measured 146px needed in a 146px track), so buy some back */
+@media (max-width: 360px) {
+  .cd-foot-locs > *:nth-child(2) > div:last-child {
+    column-gap: 6px !important;
+    font-size: 12.5px !important;
+  }
 }
 /* wide-but-short mobile widths (small tablets / half-screen windows): the 2×2
    menu cards become extreme letterbox crops — one 4-across row reads better

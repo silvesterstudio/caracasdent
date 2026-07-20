@@ -352,15 +352,17 @@ export default function SiteFooter({ footer, serif }: { footer: FooterCopy; seri
 
       {/* ── bottom bar: copyright · legal · developer ── */}
       <div className="cd-foot-bar" style={{ width: "100%", marginTop: "clamp(56px,10vh,120px)", paddingTop: "clamp(24px,4vh,44px)", borderTop: `1px solid ${LINE}` }}>
-        <div style={{ fontFamily: FONT, fontSize: "13px", lineHeight: 1.5, color: MUTED }}>
+        <div className="cd-foot-copy" style={{ fontFamily: FONT, fontSize: "13px", lineHeight: 1.5, color: MUTED }}>
           Copyright © 2026
           <br />
           <span style={{ color: LIGHT }}>{footer.copyright}</span>
         </div>
-        <div style={{ fontFamily: FONT, fontSize: "13px", color: MUTED }}>
+        <div className="cd-foot-dev" style={{ fontFamily: FONT, fontSize: "13px", color: MUTED }}>
           {footer.developedBy}{" "}
           <span style={{ color: LIGHT, fontWeight: 700, letterSpacing: "0.02em" }}>{footer.developer}</span>
-          {" | "}
+          {/* the pipe is only a separator while the credit is on ONE line; on
+              mobile the phone moves to its own line and it would dangle */}
+          <span className="cd-foot-sep">{" | "}</span>
           <a href={`tel:${footer.developerPhone.replace(/\s+/g, "")}`} style={{ color: LIGHT, fontWeight: 600 }}>
             {footer.developerPhone}
           </a>
