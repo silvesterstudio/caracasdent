@@ -54,6 +54,10 @@ const FIRST_BATCH = 10; // cells shown initially (4 rows); the button reveals th
 function Chips({ tags }: { tags: string[] }) {
   return (
     <div
+      // classed so the mobile layer can drop the chips entirely: at 3 columns on
+      // a phone a cell is ~129px wide and a 12px uppercase chip with 20px side
+      // padding cannot sit on it without covering the smile (per user)
+      className="cd-showcase-chips"
       style={{
         position: "absolute",
         left: "clamp(12px, 1.54vw, 24px)",

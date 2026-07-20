@@ -3,7 +3,7 @@
 // DOM — only opacity differs — so every one can be measured at once.)
 import puppeteer from "puppeteer-core";
 
-const [w = "390", h = "844"] = process.argv.slice(2);
+const [w = "390", h = "844", lang = "ro"] = process.argv.slice(2);
 const browser = await puppeteer.launch({
   executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
   headless: "new",
@@ -12,6 +12,19 @@ const browser = await puppeteer.launch({
 const page = await browser.newPage();
 await page.setViewport({ width: parseInt(w), height: parseInt(h) });
 await page.goto("http://localhost:3000", { waitUntil: "networkidle2", timeout: 60000 });
+// the RU bios are longer than the RO ones — they are the real wrap test
+if (lang.toLowerCase() === "ru") {
+  const hit = await page.evaluate(() => {
+    const el = [...document.querySelectorAll("button, a, span, div")].find(
+      (e) => e.children.length === 0 && e.textContent.trim() === "RU"
+    );
+    if (!el) return false;
+    el.click();
+    return true;
+  });
+  console.log(hit ? "switched to RU" : "RU toggle NOT FOUND");
+  await new Promise((r) => setTimeout(r, 1200));
+}
 // park inside the pinned team section so it is laid out
 const y = await page.evaluate(() => {
   const el = document.querySelector("#echipa");

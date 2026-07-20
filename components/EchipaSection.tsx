@@ -47,7 +47,6 @@ const BG = "#161516";
 
 
 const cl = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
-const sm = (x: number, a: number, b: number) => cl((x - a) / (b - a));
 
 // one service: row name + the copy shown in the bottom-sheet popup (mirrors
 // ServiceItem in CaracasHero — kept local to avoid an import cycle)
@@ -95,31 +94,55 @@ export default function EchipaSection({
   // A doctor's four services as hairlined ↗ rows, each opening the bottom sheet.
   // Shared verbatim by BOTH layouts — desktop's right column and (per user) the
   // mobile stack under the caption — so the two can never drift apart.
+  //
+  // Desktop stacks them 1-per-row. Mobile packs them 2-PER-ROW (per user: buy
+  // back vertical space for the portrait) — the cells sit in a 2-col grid, so
+  // the borders below draw the hairlines: every cell gets a top line, the last
+  // PAIR gets the bottom line, and the right-hand cell gets the vertical seam.
   const serviceRows = (doc: Doctor) =>
-    doc.services.map((s, si) => (
-      <div
-        key={si}
-        onClick={() => openSheet(`0${si + 1}`, s)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => e.key === "Enter" && openSheet(`0${si + 1}`, s)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "14px",
-          padding: isM ? "9px 0" : "clamp(14px,2.2vh,22px) 0", // roomy rows, per the screenshot
-          borderTop: `1px solid ${LINE}`,
-          borderBottom: si === doc.services.length - 1 ? `1px solid ${LINE}` : undefined,
-          cursor: "pointer",
-        }}
-      >
-        <span style={{ fontFamily: FONT, fontSize: isM ? "clamp(13px,3.5vw,15px)" : "clamp(14px,0.95vw,18px)", fontWeight: 500, lineHeight: 1.3, color: "#fdf0f2" }}>{s.name}</span>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flex: "none" }}>
-          <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="#fdf0f2" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </div>
-    ));
+    doc.services.map((s, si) => {
+      const lastRow = si >= doc.services.length - 2; // mobile: the bottom pair
+      const rightCol = si % 2 === 1;
+      return (
+        <div
+          key={si}
+          onClick={() => openSheet(`0${si + 1}`, s)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && openSheet(`0${si + 1}`, s)}
+          style={{
+            display: "flex",
+            // top-align on mobile: a 1-line label next to a 2-line one would
+            // otherwise float off its neighbour's first line (the grid stretches
+            // both cells of a row to the taller one)
+            alignItems: isM ? "flex-start" : "center",
+            justifyContent: "space-between",
+            gap: isM ? "8px" : "14px",
+            // the seam needs breathing room on whichever side it lands
+            padding: isM ? (rightCol ? "8px 0 8px 12px" : "8px 12px 8px 0") : "clamp(14px,2.2vh,22px) 0",
+            borderTop: `1px solid ${LINE}`,
+            borderBottom: (isM ? lastRow : si === doc.services.length - 1) ? `1px solid ${LINE}` : undefined,
+            borderLeft: isM && rightCol ? `1px solid ${LINE}` : undefined,
+            cursor: "pointer",
+          }}
+        >
+          <span
+            style={{
+              fontFamily: FONT,
+              fontSize: isM ? "clamp(12px,3.2vw,14px)" : "clamp(14px,0.95vw,18px)",
+              fontWeight: 500,
+              lineHeight: 1.3,
+              color: "#fdf0f2",
+            }}
+          >
+            {s.name}
+          </span>
+          <svg width={isM ? "13" : "16"} height={isM ? "13" : "16"} viewBox="0 0 16 16" fill="none" style={{ flex: "none", marginTop: isM ? "2px" : undefined }}>
+            <path d="M4 12L12 4M12 4H5.5M12 4V10.5" stroke="#fdf0f2" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      );
+    });
 
   // freeze the (Lenis) page scroll while the sheet is open; Escape closes it
   const lenis = useLenis();
@@ -141,6 +164,9 @@ export default function EchipaSection({
   const imgBScaleRef = useRef<HTMLDivElement>(null);
   const imgCScaleRef = useRef<HTMLDivElement>(null);
   const textRefs = useRef<Array<HTMLDivElement | null>>([]);
+  // which doctor's text is currently shown (mobile trigger-based hand-off); -1
+  // means "nothing applied yet", so the first update always writes the styles
+  const activeRef = useRef(-1);
 
   // ── this section's own scroll driver: pins for 300vh and wipes Dr. 1 → 2 → 3 ──
   useEffect(() => {
@@ -153,12 +179,24 @@ export default function EchipaSection({
       total = root.offsetHeight - window.innerHeight;
     };
 
-    const setT = (i: number, o: number) => {
-      const el = textRefs.current[i];
-      if (el) {
-        el.style.opacity = o.toFixed(3);
-        el.style.pointerEvents = o > 0.5 ? "auto" : "none";
-      }
+    // Text hand-off (BOTH layouts): the text does NOT ride the scroll. Tying
+    // opacity to wipe progress meant that mid-wipe BOTH doctors sat at ~0.5 and
+    // their stacks superimposed into unreadable fused words (user's screenshot —
+    // worst on mobile, where the name, caption and service grid all centre on
+    // the same spot, but present on desktop too). Instead the incoming doctor's
+    // text is TRIGGERED once, when their image passes the halfway mark, and
+    // plays its own timed fade. The outgoing fades out over 200ms and the
+    // incoming only starts at 200ms, so the two are never on screen together.
+    const setActive = (a: number) => {
+      if (activeRef.current === a) return;
+      activeRef.current = a;
+      textRefs.current.forEach((el, i) => {
+        if (!el) return;
+        const on = i === a;
+        el.style.transition = on ? "opacity 380ms ease 200ms" : "opacity 200ms ease";
+        el.style.opacity = on ? "1" : "0";
+        el.style.pointerEvents = on ? "auto" : "none";
+      });
     };
 
     const update = () => {
@@ -181,12 +219,8 @@ export default function EchipaSection({
       if (imgBScaleRef.current) imgBScaleRef.current.style.transform = "scale(" + (1.2 - 0.19 * w1).toFixed(4) + ")";
       if (imgCScaleRef.current) imgCScaleRef.current.style.transform = "scale(" + (1.2 - 0.19 * w2).toFixed(4) + ")";
 
-      const oA = 1 - sm(w1, 0.4, 0.6);
-      const oB = sm(w1, 0.4, 0.6) * (1 - sm(w2, 0.4, 0.6));
-      const oC = sm(w2, 0.4, 0.6);
-      setT(0, oA);
-      setT(1, oB);
-      setT(2, oC);
+      // "reaches the middle" = that image's wipe is half-revealed
+      setActive(w2 >= 0.5 ? 2 : w1 >= 0.5 ? 1 : 0);
     };
 
     let raf = 0;
@@ -214,6 +248,10 @@ export default function EchipaSection({
       window.removeEventListener("resize", onResize);
       if (raf) cancelAnimationFrame(raf);
       clearTimeout(t1);
+      // leave no inline transition behind, and force the next setActive to
+      // re-apply from scratch rather than trusting a stale active index
+      textRefs.current.forEach((el) => el && (el.style.transition = ""));
+      activeRef.current = -1;
     };
   }, [doctors]);
 
@@ -298,7 +336,15 @@ export default function EchipaSection({
                 position: "absolute",
                 left: 0,
                 width: "100vw", // centered on the WINDOW midpoint = the photo seam (see 50vw note)
-                bottom: isM ? "5.5%" : "3.5%", // hugs the bottom; room for the ș descenders
+                // Desktop hugs the bottom (room for the ș descenders). Mobile
+                // anchors from the TOP instead: the cells below are natural
+                // height now, so a doctor whose service label wraps to two lines
+                // has a taller grid — bottom-anchored, that shoved their name
+                // upward (Nicolae's sat 16px above the other two). Anchoring the
+                // top pins all three names to the same line and lets the extra
+                // row height grow downward into the spare space instead.
+                bottom: isM ? undefined : "3.5%",
+                top: isM ? "62%" : undefined,
                 zIndex: 2,
                 textAlign: "center",
                 color: "#fdf0f2",
@@ -336,15 +382,15 @@ export default function EchipaSection({
                   className="cd-team-caption"
                   style={{
                     marginTop: "clamp(12px, 2vh, 20px)",
-                    // Narrower column than the rows so all three bios wrap to the
-                    // SAME 3 lines (at 7% padding Dr. Elena's shorter bio fell to 2,
-                    // which dropped her name 21px below the other two). minHeight
-                    // locks that height in, so even if a translation runs short the
-                    // names stay pinned to one position.
-                    padding: "0 13%",
-                    minHeight: "calc(3 * 1.45em)",
+                    // TWO lines (per user). That needs the full row width and a
+                    // step down in size — the longest bio is ~120 characters, so
+                    // 2 lines means ~60 per line. minHeight reserves the second
+                    // line so a shorter bio or translation can't pull the block
+                    // up and take the service grid with it.
+                    padding: "0 4%",
+                    minHeight: "calc(2 * 1.45em)",
                     fontFamily: FONT,
-                    fontSize: "clamp(13px, 3.6vw, 16px)",
+                    fontSize: "clamp(10.5px, 2.85vw, 12.5px)",
                     fontWeight: 400,
                     lineHeight: 1.45,
                     letterSpacing: "-0.01em",
@@ -360,7 +406,20 @@ export default function EchipaSection({
                   pointerEvents re-enabled: the wrapper above disables them so the
                   big name never eats taps, but these rows DO open the sheet. */}
               {isM && (
-                <div style={{ marginTop: "clamp(14px, 2.4vh, 24px)", padding: "0 6%", textAlign: "left", pointerEvents: "auto" }}>
+                <div
+                  style={{
+                    marginTop: "clamp(14px, 2.4vh, 24px)",
+                    padding: "0 6%",
+                    textAlign: "left",
+                    pointerEvents: "auto",
+                    // 2 per row (per user) — halves the block's height so the
+                    // portrait keeps more of the frame. gap stays 0: the cells'
+                    // own borders ARE the grid lines, and a gap would break them.
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 0,
+                  }}
+                >
                   {serviceRows(doc)}
                 </div>
               )}

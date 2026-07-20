@@ -288,8 +288,48 @@ a:hover {
   }
 }
 @media screen and (max-width: 719px) {
+  /* PHONE: 2 columns on a strict repeating 6-cell unit, so the wall reads as a
+     pattern instead of one tall cell followed by an arbitrary run of squares:
+
+       ┌────┬────┐   1 = tall, left      4 = tall, right
+       │    │ 2  │   2,3 = stacked right 5,6 = stacked left
+       │ 1  ├────┤   … then the unit repeats, mirrored each time
+       │    │ 3  │
+       ├────┼────┤
+       │ 5  │    │
+       ├────┤ 4  │
+       │ 6  │    │
+       └────┴────┘
+
+     The tall cells are pinned to a column (1 then 2) — without that, auto-flow
+     drops the second one into column 1 and the mirror never happens. `dense`
+     then backfills 5 and 6 beside it; there are no earlier holes for it to
+     pull from, so document order is preserved. */
   .cd-showcase-grid {
     grid-template-columns: repeat(2, 1fr);
+    grid-auto-flow: row dense;
+  }
+  .cd-showcase-grid > *:nth-child(6n + 1),
+  .cd-showcase-grid > *:nth-child(6n + 4) {
+    grid-row: span 2;
+    aspect-ratio: 428 / 568;
+  }
+  .cd-showcase-grid > *:nth-child(6n + 1) {
+    grid-column: 1;
+  }
+  .cd-showcase-grid > *:nth-child(6n + 4) {
+    grid-column: 2;
+  }
+  /* The unit consumes 3 cells per 2 rows, so a batch that is not a multiple of
+     3 ends on a tall cell with nothing to pair with — it stood alone in one
+     column and left a hole beside it. Both batch sizes hit this (10 and, once
+     "Vezi mai multe" expands, 16 — each is 3n+1). Let that trailing cell run
+     the full width as a landscape band: the row closes and it reads as a
+     deliberate cap on the pattern rather than a gap. */
+  .cd-showcase-grid > *:last-child:nth-child(3n + 1) {
+    grid-column: 1 / -1;
+    grid-row: span 1;
+    aspect-ratio: 856 / 284;
   }
 }
 
@@ -459,6 +499,12 @@ button:hover > .cd-roll > span,
   .cd-showcase-title {
     white-space: normal !important;
   }
+  /* Rezultate cards: no treatment chips over the smiles on mobile (per user).
+     Even on the 2-column phone grid a 12px uppercase chip with 20px of side
+     padding covers most of the cell — the smile is the point of the card. */
+  .cd-showcase-chips {
+    display: none !important;
+  }
   /* "Drumul tău": the desktop treatment is a CENTERED 15.54vw giant with the
      "(în 3 pași)" label absolutely placed at 63.64% — at the shared size that
      label landed ON TOP of the word. Left-align the header like every other
@@ -467,12 +513,101 @@ button:hover > .cd-roll > span,
     justify-content: flex-start !important;
     align-items: baseline !important;
     flex-wrap: wrap !important;
-    gap: 10px !important;
-    padding: 60px 4% 0 !important;
+    gap: 0 !important;
+    padding: 56px 4% 0 !important;
   }
+  /* the title runs EDGE TO EDGE (per user "max size to fit"). Measured across
+     320–860px, "DRUMUL TĂU" fills the 92% content width at 15.60vw — so the
+     component's own desktop size (15.54vw) is already the max fit, and the
+     shared section-title clamp above was the only thing shrinking it to 40px.
+     This deliberately opts back out of that clamp — hence the later, heavier
+     declaration. */
+  .cd-tl-title {
+    font-size: 15.54vw !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
+  }
+  /* "(în 3 pași)" drops BELOW the title and past its middle (per user), which is
+     also where the desktop absolute placement puts it (left 63.64%). Here it
+     just flows as a wrapped sibling with a percentage indent — no absolute
+     positioning to collide with the title at the shared size. */
   .cd-tl-label {
     position: static !important;
     white-space: nowrap !important;
+    margin: 2px 0 0 58% !important;
+  }
+  /* "Drumul tău" runs the DESKTOP stage on the phone (per user) — same track,
+     squares, sticky pins, parallax, veil and latched reveals. What does NOT
+     survive the port is the sizing: every vertical dimension of that stage is
+     vw-based, so at 390px the section collapsed to 847px (vs 2978px on
+     desktop) — all three steps on one screen and a red fill with 3px of
+     travel. Key the vertical rhythm to the VIEWPORT HEIGHT instead, so each
+     step gets its own screenful to animate through, widen the side columns
+     (28.64% of a phone is a 104px text column) and put the type back at
+     phone-legible sizes. Mechanics untouched — this is sizing only. */
+  /* LEFT RAIL (the arrangement picked 2026-07-20). A CENTRED track caps the
+     text at ~48% of the screen — that is why the straight desktop port read as
+     cramped (132px column, 3.5 words a line). Moving the track to the left edge
+     hands the whole remaining width to the photo and the copy (319px, 7 words a
+     line) while keeping every mechanic: the track, its red fill, the square
+     nodes now riding the rail, the parallax, the veil and the latched reveal.
+     The step name + copy pin together at the centre line as ONE block (they are
+     one sticky box in the markup) — the hold is the point of the section. */
+  /* the -1.5px is the track's own half-width: the squares centre on 6% of the
+     item, so the 3px track has to be pulled back half its width to share that
+     centre (desktop does the same with calc(50% - 1.5px)). Without it every
+     square sat 1.5px off the line. */
+  .cd-tl-line {
+    left: calc(6% - 1.5px) !important;
+  }
+  .cd-tl-item {
+    grid-template-columns: 12% 88% !important;
+    padding: 3vh 0 6vh !important;
+  }
+  /* the text column: pushed below the photo, tall enough to give the pin its
+     travel (the open space under the copy IS the hold — same as desktop) */
+  .cd-tl-text {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    height: 62vh !important;
+    margin-top: calc(32vh + 2vh) !important;
+  }
+  /* the centre column becomes the rail the squares ride: 12% wide, so its
+     auto-margined square lands dead on the track at 6% */
+  .cd-tl-rail {
+    grid-column: 1 !important;
+    grid-row: 1 / span 2 !important;
+    height: 100% !important;
+  }
+  .cd-tl-name {
+    font-size: clamp(22px, 6.4vw, 34px) !important;
+  }
+  /* The last step's copy stays stuck at the pin line until its column runs out,
+     and the coral footer is pulled up over the section's tail — so the text was
+     sliding 79px UNDER the dome. Note that SHORTENING the column does not help:
+     that shortens the section too, the footer rises by the same amount and the
+     overlap is unchanged. The space has to go BETWEEN the column bottom and the
+     footer, which is what this tail does. Desktop already has it via its
+     10.12vw item padding (it clears by 16px).
+     The px floor matters on SHORT viewports: the copy's height barely changes
+     but 20vh shrinks with the screen, and at 390x700 that left only 10px. */
+  .cd-tl-item-last {
+    padding-bottom: max(20vh, 175px) !important;
+  }
+  /* The photo is what closes the gaps. Its 36.78vw height is only 143px on a
+     phone — a fifth of the step — so the pinned name/body never reached it and
+     each step read as three stranded pieces with dead track between them.
+     Desktop's photo covers ~60% of its item and the pinned text sits ON it, so
+     the height is re-keyed to vh to restore that.
+     The WIDTH deliberately stays at the component's 65.87vw: full-bleed put the
+     coral step name entirely over a bright photo and it lost all contrast. At
+     71% of the component the names still start on the dark sheet and only their
+     tail crosses the image — exactly the desktop overlap. Portrait crop of a
+     landscape source is the accepted cost (ImageSlot covers). */
+  .cd-tl-img {
+    left: 56% !important;
+    width: 82vw !important;
+    height: 32vh !important;
   }
 
   /* "Cine suntem?" — mobile reading order inside the pinned 100vh panel:
@@ -628,9 +763,32 @@ button:hover > .cd-roll > span,
     min-height: 0 !important;
   }
 
-  /* timeline: the centre track/squares belong to the 3-column desktop stage */
-  .cd-tl-line {
-    display: none !important;
+  /* ── FOOTER, tightened for the phone (per user: same content, less height) ──
+     Measured at 390x844 it ran 1570px — 1.86 screens. Nothing is removed; the
+     height was going to two things:
+       1. 278px of pure GAP between only four blocks (the desktop clamps all
+          resolve near their vh maximum on a tall phone), and
+       2. the form: `flex: 1 1 240px` cannot fit two 240px fields across a
+          350px content width, so all five pills wrapped to a row each.
+     Zeroing the basis pairs Nume/Prenume and Email/Telefon back up the way
+     desktop has them, which alone is worth two rows. */
+  .cd-foot-logo {
+    margin-bottom: 38px !important;
+  }
+  .cd-foot-lower {
+    margin-top: 44px !important;
+  }
+  .cd-foot-bar {
+    margin-top: 38px !important;
+    padding-top: 22px !important;
+  }
+  #formular > h2 {
+    margin-bottom: 22px !important;
+  }
+  .cd-foot-input {
+    flex-basis: 0 !important;
+    min-width: 0 !important;
+    padding: 15px 20px !important;
   }
 }
 /* wide-but-short mobile widths (small tablets / half-screen windows): the 2×2

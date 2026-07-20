@@ -155,7 +155,7 @@ export default function SiteFooter({ footer, serif }: { footer: FooterCopy; seri
       }}
     >
       {/* logo (smile) centered — larger, with a big gap to the content below */}
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: "clamp(60px,11vh,140px)" }}>
+      <div className="cd-foot-logo" style={{ display: "flex", justifyContent: "center", marginBottom: "clamp(60px,11vh,140px)" }}>
         {/* logo tinted to blush (not pure white) via a mask, so it matches
             the site-wide no-white rule; aspect from the SVG viewBox 834×346 */}
         <div
@@ -280,7 +280,7 @@ export default function SiteFooter({ footer, serif }: { footer: FooterCopy; seri
       </div>
 
       {/* ── lower block: contact · orar · motto — the clinic's real details ── */}
-      <div style={{ width: "100%", marginTop: "clamp(64px,12vh,150px)" }}>
+      <div className="cd-foot-lower" style={{ width: "100%", marginTop: "clamp(64px,12vh,150px)" }}>
         <div>
           <div className="cd-foot-locs">
             {/* Detalii de contact */}

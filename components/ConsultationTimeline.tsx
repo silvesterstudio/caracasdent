@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import ImageSlot from "./ImageSlot";
 import { useIsMobile } from "./useIsMobile";
 
+
 /**
  * ConsultationTimeline — "Drumul tău", an EXACT replica of mosaicist.com's
  * "Our Process" timeline (per user, 2026-07-17: "make it look exactly like
@@ -81,12 +82,15 @@ export default function ConsultationTimeline({
   steps: { name: string; desc: string }[];
   serif: string;
 }) {
-  // mobile (≤860): each step stacks (name → image → body), the centre line and
-  // squares retire (they belong to the 3-column stage), pins and parallax turn
-  // off — but the LATCHED activation reveals (colour flips, veil lift, column
-  // fade-in) keep firing exactly as on desktop.
+  // Mobile keeps every mechanic of the desktop stage — track, red fill, square
+  // nodes, sticky pin, parallax, veil, latched reveal — but RE-ARRANGES it into
+  // a LEFT RAIL (chosen by the user 2026-07-20 from a set of tested options):
+  // the track runs down the left edge instead of the centre, and the photo, the
+  // step name and the copy take the full remaining width. The only structural
+  // difference is where the copy lives: on mobile it rides inside the name's
+  // sticky box so the two pin as one block; on desktop it stays in its own
+  // right-hand column. Geometry lives in globals.css (≤860 layer).
   const isM = useIsMobile();
-
   const compRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -135,16 +139,12 @@ export default function ConsultationTimeline({
       // image parallax (their inline translate3d, 0 → 15.18vw): the image's
       // static top is the ITEM top; the transform carries it down as the item
       // travels viewport-bottom → out-of-view, so it scrolls ~15% slower.
-      // On mobile the images are static in-flow — no transform writes.
+      // Runs on BOTH layouts — per user the phone gets the desktop stage.
       const vh = window.innerHeight;
       const drift = DRIFT_VW * window.innerWidth;
       itemRefs.current.forEach((it, i) => {
         const img = imgRefs.current[i];
         if (!it || !img) return;
-        if (isM) {
-          img.style.transform = "none";
-          return;
-        }
         const ir = it.getBoundingClientRect();
         const travel = vh + img.offsetHeight;
         const p = travel > 0 ? Math.max(0, Math.min(1, (vh - ir.top) / travel)) : 0;
@@ -245,16 +245,15 @@ export default function ConsultationTimeline({
             ref={(el) => {
               itemRefs.current[i] = el;
             }}
-            style={
-              isM
-                ? { position: "relative", display: "flex", flexDirection: "column", padding: "13vw 5vw 6vw" }
-                : {
-                    position: "relative",
-                    display: "grid",
-                    gridTemplateColumns: "28.64% 42.72% 28.64%",
-                    padding: "10.12vw 2.63vw",
-                  }
-            }
+            // the last step needs extra tail so its pinned text releases before
+            // the coral footer dome climbs over it (see globals.css ≤860)
+            className={i === steps.length - 1 ? "cd-tl-item cd-tl-item-last" : "cd-tl-item"}
+            style={{
+              position: "relative",
+              display: "grid",
+              gridTemplateColumns: "28.64% 42.72% 28.64%",
+              padding: "10.12vw 2.63vw",
+            }}
           >
             {/* the step image — 65.87vw × 36.78vw, centered on the line; static
                 top = ITEM top, the scroll driver parallaxes it 0 → 15.18vw down.
@@ -263,22 +262,19 @@ export default function ConsultationTimeline({
               ref={(el) => {
                 imgRefs.current[i] = el;
               }}
-              style={
-                isM
-                  ? { position: "relative", width: "100%", height: "56vw", order: 2, marginTop: "14px", overflow: "hidden", background: IMG_BG }
-                  : {
-                      position: "absolute",
-                      left: "50%",
-                      top: 0,
-                      width: "65.87vw",
-                      height: "36.78vw",
-                      transform: "translate(-50%, 0)",
-                      willChange: "transform",
-                      zIndex: 1,
-                      overflow: "hidden",
-                      background: IMG_BG,
-                    }
-              }
+              className="cd-tl-img"
+              style={{
+                position: "absolute",
+                left: "50%",
+                top: 0,
+                width: "65.87vw",
+                height: "36.78vw",
+                transform: "translate(-50%, 0)",
+                willChange: "transform",
+                zIndex: 1,
+                overflow: "hidden",
+                background: IMG_BG,
+              }}
             >
               <ImageSlot bg={IMG_BG} dark src={STEP_IMAGES[i % STEP_IMAGES.length]} alt={s.name} label={s.name} />
               {/* the black veil — strong until the item reveals, moody after */}
@@ -303,19 +299,21 @@ export default function ConsultationTimeline({
               ref={(el) => {
                 colRefs.current[i] = el;
               }}
-              style={{ height: isM ? "auto" : "40.47vw", order: isM ? 1 : undefined, opacity: 0.25, transition: "opacity 0.6s ease", zIndex: 5 }}
+              className="cd-tl-col cd-tl-text"
+              style={{ height: "40.47vw", opacity: 0.25, transition: "opacity 0.6s ease", zIndex: 5 }}
             >
               <div
                 ref={(el) => {
                   nameRefs.current[i] = el;
                 }}
+                className="cd-tl-name"
                 style={{
-                  position: isM ? "static" : "sticky",
-                  top: isM ? undefined : PIN,
+                  position: "sticky",
+                  top: PIN,
                   zIndex: 5,
                   fontFamily: serif,
                   fontWeight: 500,
-                  fontSize: isM ? "clamp(26px, 8vw, 40px)" : "3.957vw",
+                  fontSize: "3.957vw",
                   lineHeight: 1.1,
                   letterSpacing: "-0.03em",
                   color: TEXT, // → ACCENT coral once pinned (latched)
@@ -323,12 +321,34 @@ export default function ConsultationTimeline({
                 }}
               >
                 {s.name}
+                {/* MOBILE: the copy rides INSIDE the name's sticky box so the two
+                    pin together as one block at the centre line. Split across two
+                    columns (as on desktop) a phone gives each ~132px — 3.5 words
+                    a line. It sets its own colour so the name's coral latch,
+                    written onto this wrapper, cannot cascade into it. */}
+                {isM && (
+                  <div
+                    className="cd-tl-body"
+                    style={{
+                      fontFamily: FONT,
+                      fontWeight: 400,
+                      fontSize: "clamp(14px, 3.9vw, 17px)",
+                      lineHeight: 1.45,
+                      letterSpacing: "-0.01em",
+                      color: TEXT,
+                      marginTop: "10px",
+                    }}
+                  >
+                    {s.desc}
+                  </div>
+                )}
               </div>
             </div>
 
             {/* CENTRE — the square node riding the line (their .timeline_circle:
-                a 1.05vw SQUARE, border-radius 0); retired on mobile */}
-            <div style={{ height: "40.47vw", display: isM ? "none" : undefined }}>
+                a 1.05vw SQUARE, border-radius 0). On mobile this column becomes
+                the LEFT RAIL the track runs down (.cd-tl-rail). */}
+            <div className="cd-tl-col cd-tl-rail" style={{ height: "40.47vw" }}>
               <div
                 ref={(el) => {
                   squareRefs.current[i] = el;
@@ -347,21 +367,27 @@ export default function ConsultationTimeline({
             </div>
 
             {/* RIGHT — the body copy, pinned with the name; the WHOLE column
-                reveals 0.25 → 1 (their .timeline_right opacity) */}
+                reveals 0.25 → 1 (their .timeline_right opacity). DESKTOP ONLY —
+                on mobile the copy is rendered inside the name's sticky box above
+                (rendered once, never both: duplicating it would put the same
+                paragraph in the DOM twice). The driver null-checks this ref. */}
+            {!isM && (
             <div
               ref={(el) => {
                 rightColRefs.current[i] = el;
               }}
-              style={{ height: isM ? "auto" : "40.47vw", order: isM ? 3 : undefined, marginTop: isM ? "14px" : undefined, opacity: 0.25, transition: "opacity 0.6s ease", zIndex: 5 }}
+              className="cd-tl-col"
+              style={{ height: "40.47vw", opacity: 0.25, transition: "opacity 0.6s ease", zIndex: 5 }}
             >
               <div
+                className="cd-tl-body"
                 style={{
-                  position: isM ? "static" : "sticky",
-                  top: isM ? undefined : PIN,
+                  position: "sticky",
+                  top: PIN,
                   fontFamily: FONT,
                   fontWeight: 400,
-                  fontSize: isM ? "clamp(14px, 4.1vw, 18px)" : "clamp(13px, 1.579vw, 30px)",
-                  lineHeight: isM ? 1.45 : 1.3,
+                  fontSize: "clamp(13px, 1.579vw, 30px)",
+                  lineHeight: 1.3,
                   letterSpacing: "-0.03em",
                   color: TEXT,
                 }}
@@ -369,6 +395,7 @@ export default function ConsultationTimeline({
                 {s.desc}
               </div>
             </div>
+            )}
           </div>
         ))}
 
