@@ -6,6 +6,7 @@ import ImageSlot from "./ImageSlot";
 import EchipaSection from "./EchipaSection";
 import ServicesSection from "./ServicesSection";
 import SmilesShowcase from "./SmilesShowcase";
+import ReviewsSection from "./ReviewsSection";
 import ConsultationTimeline from "./ConsultationTimeline";
 import SiteFooter from "./SiteFooter";
 
@@ -135,6 +136,13 @@ type Copy = {
   collage: (n: number) => string;
   doctors: [Doctor, Doctor, Doctor];
   results: { title: string; more: string; tiles: string[][] };
+  reviews: {
+    title: string; // head words of the heading
+    titleAccent: string; // italic serif tail (pink marker sweep)
+    blurb: string; // small muted line beside the title
+    items: { q: string; name: string; role: string }[]; // 10 — split 5/5 across the two marquee rows
+    cta: string; // the button under the marquee → /recenzie
+  };
   services: { title: string; cards: ServiceItem[]; list: ServiceItem[] };
   process: { eyebrow: string; title: string; label: string; steps: { name: string; desc: string }[]; cta: string };
   faq: { eyebrow: string; title: string; items: { q: string; a: string }[] };
@@ -227,6 +235,65 @@ const COPY: Record<"ro" | "ru", Copy> = {
         ["Terapie"],
         ["All-on-X"],
       ],
+    },
+    reviews: {
+      title: "Ce spun",
+      titleAccent: "pacienții noștri",
+      blurb: "Recenzii reale de pe Google — peste 500 de pacienți ne-au încredințat zâmbetul lor.",
+      // 10 cards, split 5/5 across the two marquee rows (← top, bottom →)
+      items: [
+        {
+          q: "Un rezultat vizibil de la prima ședință, fără nicio sensibilitate. Echipa m-a făcut să mă simt în largul meu din primul minut.",
+          name: "Elena Rusu",
+          role: "Albire profesională",
+        },
+        {
+          q: "Implantul a fost mult mai simplu decât mă așteptam — totul planificat digital, fără surprize și fără durere.",
+          name: "Andrei Munteanu",
+          role: "Implant dentar",
+        },
+        {
+          q: "După fațete nu mă mai feresc să zâmbesc în fotografii. Rezultatul arată complet natural — exact ce mi-am dorit.",
+          name: "Maria Popescu",
+          role: "Fațete ceramice",
+        },
+        {
+          q: "Vin la igienizare de doi ani și de fiecare dată plec cu zâmbetul proaspăt. Program flexibil și prețuri transparente.",
+          name: "Cristina Lungu",
+          role: "Igienizare & profilaxie",
+        },
+        {
+          q: "Mi-a fost frică de dentist toată viața. Aici totul a fost calm, explicat pas cu pas — iar dintele a fost salvat.",
+          name: "Ion Ciobanu",
+          role: "Tratament de canal",
+        },
+        {
+          q: "Două coroane făcute într-o săptămână, cu programări exacte și fără durere. Se simt ca dinții mei.",
+          name: "Daniela Sturza",
+          role: "Coroane & punți",
+        },
+        {
+          q: "Am venit cu copilul la prima consultație și am rămas amândoi pacienți. Multă răbdare și explicații pe înțelesul tuturor.",
+          name: "Victoria Botnaru",
+          role: "Consultație & profilaxie",
+        },
+        {
+          q: "O plombă refăcută atât de frumos încât nu o mai găsesc nici eu. Materiale bune și lucru foarte îngrijit.",
+          name: "Ana Guțu",
+          role: "Obturații estetice",
+        },
+        {
+          q: "La 62 de ani am din nou cu ce mesteca. Toată reconstrucția a decurs exact cum mi-a fost prezentată la început.",
+          name: "Vasile Ceban",
+          role: "All-on-X",
+        },
+        {
+          q: "M-au primit în aceeași zi cu o durere acută. Problema rezolvată într-o oră, iar prețul — exact cel anunțat.",
+          name: "Natalia Railean",
+          role: "Urgență stomatologică",
+        },
+      ],
+      cta: "Lasă o recenzie",
     },
     services: {
       title: "Ce oferim?",
@@ -503,6 +570,65 @@ const COPY: Record<"ro" | "ru", Copy> = {
         ["Терапия"],
         ["All-on-X"],
       ],
+    },
+    reviews: {
+      title: "Что говорят",
+      titleAccent: "наши пациенты",
+      blurb: "Настоящие отзывы с Google — более 500 пациентов доверили нам свою улыбку.",
+      // 10 карточек, по 5 в каждом из двух рядов бегущей ленты
+      items: [
+        {
+          q: "Заметный результат уже после первого сеанса, без всякой чувствительности. Команда расположила к себе с первой минуты.",
+          name: "Elena Rusu",
+          role: "Профессиональное отбеливание",
+        },
+        {
+          q: "Имплантация оказалась куда проще, чем я ожидал — всё спланировано в цифре, без сюрпризов и без боли.",
+          name: "Andrei Munteanu",
+          role: "Зубной имплант",
+        },
+        {
+          q: "После виниров я больше не стесняюсь улыбаться на фотографиях. Результат выглядит абсолютно естественно.",
+          name: "Maria Popescu",
+          role: "Керамические виниры",
+        },
+        {
+          q: "Прихожу на гигиену уже два года, и каждый раз ухожу с обновлённой улыбкой. Гибкий график и прозрачные цены.",
+          name: "Cristina Lungu",
+          role: "Гигиена и профилактика",
+        },
+        {
+          q: "Я всю жизнь боялся стоматологов. Здесь всё было спокойно, объяснили каждый шаг — и зуб удалось спасти.",
+          name: "Ion Ciobanu",
+          role: "Лечение каналов",
+        },
+        {
+          q: "Две коронки за неделю, с точными записями и без боли. Ощущаются как собственные зубы.",
+          name: "Daniela Sturza",
+          role: "Коронки и мосты",
+        },
+        {
+          q: "Пришла с ребёнком на первую консультацию — и мы оба остались пациентами. Много терпения и понятные объяснения.",
+          name: "Victoria Botnaru",
+          role: "Консультация и профилактика",
+        },
+        {
+          q: "Пломбу переделали так красиво, что я и сама её не нахожу. Хорошие материалы и очень аккуратная работа.",
+          name: "Ana Guțu",
+          role: "Эстетические пломбы",
+        },
+        {
+          q: "В 62 года мне снова есть чем жевать. Вся реконструкция прошла ровно так, как её представили в начале.",
+          name: "Vasile Ceban",
+          role: "All-on-X",
+        },
+        {
+          q: "Меня приняли в тот же день с острой болью. Проблему решили за час, а цена — ровно та, что назвали.",
+          name: "Natalia Railean",
+          role: "Неотложная помощь",
+        },
+      ],
+      cta: "Оставить отзыв",
     },
     services: {
       title: "Что мы предлагаем?",
@@ -1681,6 +1807,12 @@ export default function CaracasHero({
 
     <div ref={rootRef} style={{ position: "relative", height: `${scrubHeight}vh`, background: panelColor, overflowX: "clip" }}>
       <div
+        // cd-hero-frame: ≤860 swaps the height to 100svh (globals.css) — on iOS
+        // 100vh is the LARGE viewport (URL bar collapsed), so on load the
+        // bottom-anchored headline/CTA hung below the first screen (per user's
+        // device screenshot). svh = the viewport with the bar VISIBLE; if svh is
+        // unsupported the !important rule is dropped and this 100vh still holds.
+        className="cd-hero-frame"
         style={{
           position: "sticky",
           top: 0,
@@ -2017,6 +2149,17 @@ export default function CaracasHero({
       more={t.results.more}
       tiles={t.results.tiles}
       images={RESULT_IMAGES}
+      serif={serifFont}
+    />
+
+    {/* ── RECENZII — infinite two-way marquee of Google-style review cards,
+        with the "Lasă o recenzie" funnel button → /recenzie ── */}
+    <ReviewsSection
+      title={t.reviews.title}
+      titleAccent={t.reviews.titleAccent}
+      blurb={t.reviews.blurb}
+      items={t.reviews.items}
+      cta={t.reviews.cta}
       serif={serifFont}
     />
 

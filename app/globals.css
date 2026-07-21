@@ -416,6 +416,47 @@ button:hover > .cd-roll > span,
   }
 }
 
+/* ── RECENZII marquee: two rows of Google-style review cards drifting in
+   opposite directions at reading speed. The track holds TWO identical card
+   groups and animates to exactly -50% — one full group width, its trailing gap
+   included because the gap lives INSIDE the group as padding-right — so the
+   loop wraps with no visible seam. Hover pauses (so a card can be read at
+   leisure); prefers-reduced-motion stops it entirely. */
+.cd-rev-marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
+}
+.cd-rev-track {
+  display: flex;
+  width: max-content;
+  animation: cd-rev-scroll 60s linear infinite;
+  will-change: transform;
+}
+.cd-rev-track--rev {
+  animation-direction: reverse; /* the bottom row drifts the other way */
+  animation-duration: 75s; /* slightly different speed reads organic */
+}
+.cd-rev-group {
+  display: flex;
+  align-items: stretch;
+  gap: clamp(14px, 1.25vw, 22px);
+  padding-right: clamp(14px, 1.25vw, 22px);
+}
+.cd-rev-marquee:hover .cd-rev-track {
+  animation-play-state: paused;
+}
+@keyframes cd-rev-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cd-rev-track {
+    animation: none;
+  }
+}
+
 /* ═══ RESPONSIVE LAYER (≤860px, ≤600px) ════════════════════════════════════
    ADDITIVE ONLY: these rules override inline desktop styles (hence !important)
    below the breakpoints and change NOTHING at desktop widths. All animation
@@ -447,6 +488,14 @@ button:hover > .cd-roll > span,
 
   /* hero (mosaicist mobile structure): giant two-line headline bottom-left,
      full-width sub under it, then a BIG full-width CTA at the very bottom */
+  /* ONE SCREEN on load (per user's device screenshot): iOS resolves 100vh as
+     the collapsed-URL-bar viewport, so the bottom-anchored headline/CTA sat
+     below the fold until the first scroll. 100svh is the viewport with the
+     browser bar visible. Unsupported browsers drop this rule and keep the
+     inline 100vh. */
+  .cd-hero-frame {
+    height: 100svh !important;
+  }
   .cd-hero-line {
     display: none !important; /* the reference has no hairline on mobile */
   }
@@ -485,6 +534,7 @@ button:hover > .cd-roll > span,
      uppercase) — only size + gap are unified. */
   .cd-cine-heading,
   .cd-showcase-title,
+  .cd-rev-title,
   .cd-tl-title {
     font-size: clamp(40px, 5.3vw, 104px) !important;
     line-height: 0.98 !important;
@@ -498,6 +548,25 @@ button:hover > .cd-roll > span,
      nowrap line far wider than a 720–860px screen — let it wrap on mobile */
   .cd-showcase-title {
     white-space: normal !important;
+  }
+  /* Recenzii: the header stacks; the marquee itself is width-independent (the
+     cards clamp to 270px and the rows simply show fewer at once). Title size
+     comes from the unified section-title rule. */
+  .cd-rev-head {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    margin-bottom: 4.5vh !important;
+  }
+  /* the accent is TWO words and wraps mid-phrase at the unified mobile title
+     size — a wrapped .cd-mark-wrap renders its marker as a broken sliver (the
+     known gotcha the showcase avoids with its one-row rule). inline-block keeps
+     the accent one unbreakable fragment so the ::before covers its whole box
+     (on its own line if need be); 1em instead of 1.08em so it still fits 320px. */
+  .cd-rev-title .cd-mark-wrap {
+    display: inline-block;
+    white-space: nowrap;
+    font-size: 1em !important;
   }
   /* Rezultate cards: no treatment chips over the smiles on mobile (per user).
      Even on the 2-column phone grid a 12px uppercase chip with 20px of side
