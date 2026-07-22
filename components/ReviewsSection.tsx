@@ -150,8 +150,14 @@ export default function ReviewsSection({
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
-          el.classList.add("cd-mark-on");
           io.disconnect();
+          // the serif accent is font-display:swap — on a slow connection the
+          // real italic lands AFTER the title is in view, so an immediate sweep
+          // reads as "marker first, text after" (per user, on mobile). Hold the
+          // sweep until the fonts are in; instant when they already are.
+          const arm = () => el.classList.add("cd-mark-on");
+          if (!document.fonts || document.fonts.status === "loaded") arm();
+          else document.fonts.ready.then(arm);
         }
       },
       { threshold: 0.4 }

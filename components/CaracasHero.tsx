@@ -180,6 +180,7 @@ const COPY: Record<"ro" | "ru", Copy> = {
       { label: "Servicii", target: "#servicii" },
       { label: "Echipa", target: "#echipa" },
       { label: "Rezultate", target: "#rezultate" },
+      { label: "Recenzii", target: "#recenzii" },
       { label: "Drumul tău", target: "#drumul" },
       { label: "Contact", target: "footer" },
     ],
@@ -239,7 +240,7 @@ const COPY: Record<"ro" | "ru", Copy> = {
     reviews: {
       title: "Ce spun",
       titleAccent: "pacienții noștri",
-      blurb: "Recenzii reale de pe Google — peste 500 de pacienți ne-au încredințat zâmbetul lor.",
+      blurb: "Aproape 100 de recenzii reale pe Google — pacienți care ne-au încredințat zâmbetul lor.",
       // 10 cards, split 5/5 across the two marquee rows (← top, bottom →)
       items: [
         {
@@ -518,6 +519,7 @@ const COPY: Record<"ro" | "ru", Copy> = {
       { label: "Услуги", target: "#servicii" },
       { label: "Команда", target: "#echipa" },
       { label: "Результаты", target: "#rezultate" },
+      { label: "Отзывы", target: "#recenzii" },
       { label: "Ваш путь", target: "#drumul" },
       { label: "Контакты", target: "footer" },
     ],
@@ -574,7 +576,7 @@ const COPY: Record<"ro" | "ru", Copy> = {
     reviews: {
       title: "Что говорят",
       titleAccent: "наши пациенты",
-      blurb: "Настоящие отзывы с Google — более 500 пациентов доверили нам свою улыбку.",
+      blurb: "Почти 100 настоящих отзывов в Google — пациенты, доверившие нам свою улыбку.",
       // 10 карточек, по 5 в каждом из двух рядов бегущей ленты
       items: [
         {
@@ -1433,8 +1435,13 @@ export default function CaracasHero({
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
-          hd.classList.add("cd-mark-on");
           io.disconnect();
+          // font-display:swap — don't sweep the marker over fallback-serif text
+          // that's still waiting for PP Editorial Italic (reads as "marker
+          // first, text after" on slow connections); instant when fonts are in
+          const arm = () => hd.classList.add("cd-mark-on");
+          if (!document.fonts || document.fonts.status === "loaded") arm();
+          else document.fonts.ready.then(arm);
         }
       },
       { threshold: 0.4 }

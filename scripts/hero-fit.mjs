@@ -38,8 +38,11 @@ const r = await page.evaluate(() => {
   const cta = document.querySelector(".cd-hero-cta");
   const cr = cta ? cta.getBoundingClientRect() : null;
   return {
-    svhRule: rules.find((t) => t.includes("100svh")) || null,
-    supports: CSS.supports("height", "100svh"),
+    // 2026-07-22: the frame rule is now svh-with-dvh-override (the dvh line wins
+    // CSSOM serialization, so only "100dvh" is visible here; the svh fallback
+    // still exists at parse time for browsers without dvh)
+    svhRule: rules.find((t) => t.includes("100dvh") || t.includes("100svh")) || null,
+    supports: CSS.supports("height", "100dvh"),
     frameH: Math.round(fr.height),
     ctaBottom: cr ? Math.round(cr.bottom) : null,
     vh: window.innerHeight,

@@ -443,8 +443,13 @@ button:hover > .cd-roll > span,
   gap: clamp(14px, 1.25vw, 22px);
   padding-right: clamp(14px, 1.25vw, 22px);
 }
-.cd-rev-marquee:hover .cd-rev-track {
-  animation-play-state: paused;
+/* pause-to-read is a desktop affordance only: on touch screens a tap sets a
+   sticky :hover that froze the row until the next tap elsewhere (per user:
+   "make them go nonstop" on mobile) — so the pause needs a real hover device */
+@media (hover: hover) and (pointer: fine) {
+  .cd-rev-marquee:hover .cd-rev-track {
+    animation-play-state: paused;
+  }
 }
 @keyframes cd-rev-scroll {
   to {
@@ -495,6 +500,13 @@ button:hover > .cd-roll > span,
      inline 100vh. */
   .cd-hero-frame {
     height: 100svh !important;
+    /* …but TRACK the URL bar after that (dvh): this sticky frame is also the
+       pinned "Cine suntem?" stage — at a FIXED 100svh, once the bar collapses
+       mid-scroll the visible viewport grows ~7% taller than the frame and the
+       panel ends in a dead blush band at the bottom for the whole pinned scrub
+       (per user 2026-07-22). dvh == svh on load (bar visible), so the hero
+       still fits one screen; unsupported browsers keep the svh line above. */
+    height: 100dvh !important;
   }
   .cd-hero-line {
     display: none !important; /* the reference has no hairline on mobile */

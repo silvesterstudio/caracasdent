@@ -103,8 +103,13 @@ export default function ServicesSection({
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
-          el.classList.add("cd-mark-on");
           io.disconnect();
+          // font-display:swap — don't sweep the marker over fallback-serif text
+          // that's still waiting for PP Editorial Italic (reads as "marker
+          // first, text after" on slow connections); instant when fonts are in
+          const arm = () => el.classList.add("cd-mark-on");
+          if (!document.fonts || document.fonts.status === "loaded") arm();
+          else document.fonts.ready.then(arm);
         }
       },
       { threshold: 0.4 }
