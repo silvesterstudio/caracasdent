@@ -171,7 +171,8 @@ export default function SmilesShowcase({
           >
             {titleHead}{" "}
             <span className="cd-mark-wrap" style={{ fontFamily: serif, fontStyle: "italic", fontWeight: 500, fontSize: "1.08em", lineHeight: 0.8 }}>
-              {titleAccent}
+              {/* .cd-mark-text: keeps the text painted ABOVE the sweeping mark on WebKit */}
+              <span className="cd-mark-text">{titleAccent}</span>
             </span>
           </h2>
 

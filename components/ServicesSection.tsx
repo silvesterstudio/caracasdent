@@ -167,7 +167,8 @@ export default function ServicesSection({
               WebkitTextStrokeColor: "currentcolor",
             }}
           >
-            {title.split(" ").slice(1).join(" ")}
+            {/* .cd-mark-text: keeps the text painted ABOVE the sweeping mark on WebKit */}
+            <span className="cd-mark-text">{title.split(" ").slice(1).join(" ")}</span>
           </span>
         </h2>
 

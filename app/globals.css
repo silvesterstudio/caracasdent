@@ -195,6 +195,15 @@ a:hover {
 .cd-mark-on .cd-mark-wrap::before {
   transform: scaleX(1) rotate(-1.2deg);
 }
+/* WebKit (= every iPhone browser) promotes the transitioning ::before to its
+   own compositing layer and paints it ABOVE the in-flow text, ignoring the
+   z-index:-1, until the sweep ends — the mark visibly covered the accent and
+   the text "appeared" after (user report 2026-07-22). An explicitly positioned
+   z-index:1 wrapper around the text pins its paint order above the layer. */
+.cd-mark-text {
+  position: relative;
+  z-index: 1;
+}
 
 /* services (LAVA-style) — light arrow circles on the cards/rows + slow photo zoom */
 .cd-svc-circle {
@@ -498,15 +507,20 @@ button:hover > .cd-roll > span,
      below the fold until the first scroll. 100svh is the viewport with the
      browser bar visible. Unsupported browsers drop this rule and keep the
      inline 100vh. */
-  .cd-hero-frame {
+  /* The sticky frame stays the inline 100vh (iOS: the LARGE, stable viewport).
+     Both svh (2026-07-21) and dvh (07-22 morning) on the frame were wrong:
+     svh froze the pinned "Cine suntem?" stage smaller than the collapsed-bar
+     screen (dead blush band at the bottom of the whole scrub), and dvh made
+     the frame RESIZE while the URL bar animated — the chunk auto-fit re-ran
+     every frame ("text gets bigger and smaller, laggy", user's iPhone). A
+     stable 100vh frame fixes both; only the HERO OVERLAY needs the small
+     viewport, so IT gets 100svh — the bottom-anchored headline/CTA land
+     inside the first visible screen at load (bar shown, original iOS bug),
+     and once the bar collapses the hero has scrolled away anyway. top:0 +
+     height means the inline bottom:0 is ignored per CSS; browsers without
+     svh drop the rule and keep inset:0 (pre-07-21 behavior). */
+  .cd-hero-ui {
     height: 100svh !important;
-    /* …but TRACK the URL bar after that (dvh): this sticky frame is also the
-       pinned "Cine suntem?" stage — at a FIXED 100svh, once the bar collapses
-       mid-scroll the visible viewport grows ~7% taller than the frame and the
-       panel ends in a dead blush band at the bottom for the whole pinned scrub
-       (per user 2026-07-22). dvh == svh on load (bar visible), so the hero
-       still fits one screen; unsupported browsers keep the svh line above. */
-    height: 100dvh !important;
   }
   .cd-hero-line {
     display: none !important; /* the reference has no hairline on mobile */

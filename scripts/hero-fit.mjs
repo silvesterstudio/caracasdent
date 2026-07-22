@@ -1,8 +1,10 @@
-// Hero one-screen check: is the .cd-hero-frame svh rule actually in the served
-// CSS (an invalid declaration would be silently dropped), and does the hero's
-// bottom-anchored content sit inside the first viewport? Headless Chrome has no
-// dynamic URL bar, so svh === vh here — the rule's PRESENCE is the testable
-// part, plus the CTA's position within the frame.
+// Hero one-screen check (reworked 2026-07-22): the sticky FRAME stays a stable
+// inline 100vh (svh/dvh on it caused the Cine dead-band / resize-jank bugs);
+// the one-screen fix lives on the hero OVERLAY — .cd-hero-ui gets height:100svh
+// ≤860 so the bottom-anchored headline/CTA sit inside the first visible screen.
+// Headless Chrome has no dynamic URL bar (svh === vh), so the testable parts are
+// the rule's PRESENCE in served CSS (an invalid declaration is silently
+// dropped), that NO svh/dvh rule remains on the frame, and the CTA position.
 import puppeteer from "puppeteer-core";
 import { mkdirSync } from "fs";
 
@@ -19,7 +21,8 @@ await page.goto("http://localhost:3000", { waitUntil: "networkidle2", timeout: 6
 await new Promise((r) => setTimeout(r, 1200));
 
 const r = await page.evaluate(() => {
-  const rules = [];
+  const frameRules = [];
+  const uiRules = [];
   for (const sheet of document.styleSheets) {
     let list;
     try { list = sheet.cssRules; } catch { continue; }
@@ -27,7 +30,8 @@ const r = await page.evaluate(() => {
       for (const rule of rs) {
         // check BEFORE recursing: modern Chrome gives style rules a cssRules
         // property too (CSS nesting), so an else-if never sees their selector
-        if (rule.selectorText?.includes("cd-hero-frame")) rules.push(rule.cssText);
+        if (rule.selectorText?.includes("cd-hero-frame")) frameRules.push(rule.cssText);
+        if (rule.selectorText?.includes("cd-hero-ui")) uiRules.push(rule.cssText);
         if (rule.cssRules?.length) walk(rule.cssRules);
       }
     };
@@ -35,22 +39,23 @@ const r = await page.evaluate(() => {
   }
   const frame = document.querySelector(".cd-hero-frame");
   const fr = frame.getBoundingClientRect();
+  const ui = document.querySelector(".cd-hero-ui");
   const cta = document.querySelector(".cd-hero-cta");
   const cr = cta ? cta.getBoundingClientRect() : null;
   return {
-    // 2026-07-22: the frame rule is now svh-with-dvh-override (the dvh line wins
-    // CSSOM serialization, so only "100dvh" is visible here; the svh fallback
-    // still exists at parse time for browsers without dvh)
-    svhRule: rules.find((t) => t.includes("100dvh") || t.includes("100svh")) || null,
-    supports: CSS.supports("height", "100dvh"),
+    uiRule: uiRules.find((t) => t.includes("100svh")) || null,
+    frameViewportRule: frameRules.find((t) => t.includes("svh") || t.includes("dvh")) || null,
+    supports: CSS.supports("height", "100svh"),
     frameH: Math.round(fr.height),
+    uiH: ui ? Math.round(ui.getBoundingClientRect().height) : null,
     ctaBottom: cr ? Math.round(cr.bottom) : null,
     vh: window.innerHeight,
   };
 });
-console.log(`${w}x${h}: svh supported=${r.supports} | rule ${r.svhRule ? "PRESENT: " + r.svhRule : "MISSING"}`);
+console.log(`${w}x${h}: svh supported=${r.supports} | ui rule ${r.uiRule ? "PRESENT: " + r.uiRule : "MISSING"}`);
+console.log(`  frame svh/dvh rule: ${r.frameViewportRule ? "STILL PRESENT (should be gone!): " + r.frameViewportRule : "none (stable 100vh) ✓"}`);
 console.log(
-  `  frame ${r.frameH}px (vh ${r.vh}) | CTA bottom ${r.ctaBottom} ${r.ctaBottom !== null && r.ctaBottom <= r.vh ? "(inside first screen)" : "(BELOW FOLD)"}`
+  `  frame ${r.frameH}px, hero-ui ${r.uiH}px (vh ${r.vh}) | CTA bottom ${r.ctaBottom} ${r.ctaBottom !== null && r.ctaBottom <= r.vh ? "(inside first screen)" : "(BELOW FOLD)"}`
 );
 await page.screenshot({ path: `shots/hero-${w}.png` });
 console.log(`shots/hero-${w}.png`);

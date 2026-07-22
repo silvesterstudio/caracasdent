@@ -1330,7 +1330,16 @@ export default function CaracasHero({
         update();
       });
     };
+    let lastResizeW = window.innerWidth;
     const onResize = () => {
+      // iOS fires resize for EVERY frame of the URL-bar collapse/expand —
+      // width unchanged, only the visual height breathes. measure() is heavy
+      // (the chunk auto-fit forces dozens of layouts), so running it on those
+      // made scrolling visibly lag on the phone; the layout is anchored to the
+      // stable 100vh frame, so height-only changes on touch need nothing.
+      // Real rotations/resizes change the width (and desktop keeps full re-measure).
+      if (window.innerWidth === lastResizeW && matchMedia("(pointer: coarse)").matches) return;
+      lastResizeW = window.innerWidth;
       measure();
       update();
     };
@@ -1892,6 +1901,10 @@ export default function CaracasHero({
             The group drifts up slower than the video on scroll (no fade). ── */}
         <div
           ref={videoUiRef}
+          // cd-hero-ui: ≤860 caps this overlay at 100svh (globals.css) so the
+          // bottom-anchored headline/CTA sit inside the FIRST visible screen
+          // (URL bar shown) while the frame itself stays a stable 100vh
+          className="cd-hero-ui"
           style={{
             position: "absolute",
             inset: 0,
@@ -2037,7 +2050,8 @@ export default function CaracasHero({
               >
                 {t.goalTitle.split(" ")[0]}{" "}
                 <span className="cd-mark-wrap" style={{ fontFamily: serifFont, fontStyle: "italic", fontWeight: 500, fontSize: "1.08em", lineHeight: 0.8, WebkitTextStrokeWidth: "0.017em", WebkitTextStrokeColor: "currentcolor" }}>
-                  {t.goalTitle.split(" ").slice(1).join(" ")}
+                  {/* .cd-mark-text: keeps the text painted ABOVE the sweeping mark on WebKit */}
+                  <span className="cd-mark-text">{t.goalTitle.split(" ").slice(1).join(" ")}</span>
                 </span>
               </div>
               {/* Image area (position/height auto-balanced in measure): ONE tall photo
