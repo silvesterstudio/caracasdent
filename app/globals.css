@@ -808,12 +808,22 @@ button:hover > .cd-roll > span,
     font-size: clamp(22px, 4.2vh, 38px) !important;
     line-height: 1.16 !important;
   }
+  /* 7 serif nav words: a single column stacked them 7 rows tall and overflowed the
+     sheet — flow them into ~2 rows with flex-wrap instead (each label is inline
+     whiteSpace:nowrap, so only whole chips wrap). Two-value gap = row-gap / column-gap. */
   .cd-menu-links {
-    grid-template-columns: 1fr !important;
-    row-gap: clamp(0px, 0.6vh, 6px) !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    align-content: center !important;
+    gap: clamp(6px, 1.1vh, 12px) clamp(10px, 3.2vw, 22px) !important;
     flex: 1 1 auto !important;
     min-height: 0 !important;
-    align-content: center !important;
+  }
+  /* cap the link chips below the shared "Servicii:" size so seven fit two rows on a phone */
+  .cd-menu-inner .cd-menu-links .cd-menu-big {
+    font-size: clamp(15px, 2.4vh, 20px) !important;
+    line-height: 1.12 !important;
   }
   /* left rail → compact bottom cluster: the utility row spans full width on
      top (order -1), then RO/RU and the socials share one row */

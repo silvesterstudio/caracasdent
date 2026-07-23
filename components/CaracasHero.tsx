@@ -1014,7 +1014,7 @@ export default function CaracasHero({
             ref={(el) => {
               charsRef.current[at] = el;
             }}
-            style={{ display: "inline-block", opacity: 0.2, willChange: "opacity" }}
+            style={{ display: "inline-block", opacity: 0.2 }}
           >
             {tk.word[i]}
           </span>
@@ -1261,6 +1261,12 @@ export default function CaracasHero({
     // couple dozen chars, not the whole ~230-char paragraph) — this avoids a
     // per-frame style-recalc storm across every span.
     let prevOpac: number[] = [];
+    // per-frame write guards (mobile frame budget) + input mode. On touch, scrolling
+    // is native (Lenis smooths the wheel only), so scroll-driven transforms trail the
+    // finger by a frame; `coarse` lets the heaviest parallax opt out on phones.
+    let lastSlicePar = "";
+    let lastContainerGp = -1;
+    const coarse = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
     const update = () => {
       if (!rootRef.current) return;
@@ -1281,21 +1287,26 @@ export default function CaracasHero({
       const goalRise = cl((p - 0.091) / 0.909);
       const gp = goalRise;
       const par = gp * 40;
-      if (mediaWrapRef.current) {
-        mediaWrapRef.current.style.transform = "translateY(-" + par.toFixed(2) + "vh)";
-      }
-
-      // 2. hero text overlay: drifts UP with the video (0.7× — a bit faster now) — NO fade (it's
-      //    simply covered by the rising Scopul panel).
-      if (videoUiRef.current) videoUiRef.current.style.transform = "translateY(-" + (par * 0.7).toFixed(2) + "vh)";
-
-      // 5. the WHOLE goal section (title + collage + chunk) rises up from the bottom
-      //    the instant the marquee stops, locked to the video parallax. Once fully
-      //    risen (~p=0.32) gp clamps to 1, so it PINS in place — held there while the
-      //    chunk reveals and the images fuse. It then scrolls away naturally when the
-      //    sticky scrub container ends (the default hand-off into the team section).
-      if (goalRef.current) {
-        goalRef.current.style.transform = "translateY(" + ((1 - gp) * 100).toFixed(3) + "%)";
+      // container parallax — guarded on gp so nothing is written per frame while the
+      // section is outside the scrub (gp pinned at 0 or 1). Three functions of gp:
+      //   1. video drifts UP as the section rises over it;
+      //   2. hero text overlay drifts up too but slower (0.7×) — lags behind = depth;
+      //   5. the goal section (title + collage + chunk) rises from the bottom as the
+      //      marquee stops, then scrolls away when the sticky scrub container ends.
+      if (gp !== lastContainerGp) {
+        lastContainerGp = gp;
+        if (mediaWrapRef.current) mediaWrapRef.current.style.transform = "translateY(-" + par.toFixed(2) + "vh)";
+        if (videoUiRef.current) videoUiRef.current.style.transform = "translateY(-" + (par * 0.7).toFixed(2) + "vh)";
+        if (goalRef.current) {
+          // DESKTOP rises across the WHOLE scrub (reaches place at p=1) for a seamless 1×
+          // sticky hand-off. MOBILE (≤860) rises FAST then HOLDS: there the collage is
+          // bottom-pinned under a tall heading→chunk stack, so the slow full-scrub rise
+          // slid it up over the last ~40% of scroll and read as the photo "growing". Frame
+          // it by ~p0.44, then hold — the collage arrives, then sits still while the chunk
+          // reveals against it (matching how the desktop side column already behaves).
+          const rise = window.innerWidth <= 860 ? cl((p - 0.091) / 0.35) : gp;
+          goalRef.current.style.transform = "translateY(" + ((1 - rise) * 100).toFixed(3) + "%)";
+        }
       }
 
       // 6. chunk reveal: ROW-SYNCED. Each row starts revealing the moment its top rises
@@ -1356,6 +1367,7 @@ export default function CaracasHero({
       //    the collage stays 4 images, and Echipa owns its own static Dr. 1 base.)
       const imgs = imgsRef.current;
       const shown = imgShownRef.current;
+      let restarted: HTMLElement[] | null = null;
       for (let k = 0; k < imgs.length; k++) {
         const el = imgs[k];
         if (!el) continue;
@@ -1364,8 +1376,7 @@ export default function CaracasHero({
           if (!shown[k]) {
             shown[k] = true;
             el.style.animation = "none";
-            void el.offsetWidth; // reflow so the pop restarts cleanly
-            el.style.animation = "cd-pop 2s cubic-bezier(0.16,0.9,0.3,1) both";
+            (restarted ||= []).push(el); // batch — restart AFTER a single shared reflow
           }
         } else if (shown[k]) {
           shown[k] = false;
@@ -1374,17 +1385,28 @@ export default function CaracasHero({
           el.style.transform = "scale(1.2)";
         }
       }
+      // ONE forced reflow flushes the animation:none for every strip that just crossed its
+      // trigger, then all of them restart cleanly. On a fast flick several triggers pass in
+      // the same frame; the old per-strip `void offsetWidth` did up to 4 full layouts/frame
+      // over the heavy Cine DOM — the mobile hero→Cine "hitch".
+      if (restarted) {
+        void restarted[0].offsetWidth;
+        for (const el of restarted) el.style.animation = "cd-pop 2s cubic-bezier(0.16,0.9,0.3,1) both";
+      }
 
       // 8. sliced-photo parallax: all 4 strips show the SAME image, and every copy
       //    (both slideshow buffers) gets the SAME translateY each frame — so the
       //    slices always stay aligned with each other while the picture drifts
       //    slowly behind the fixed gaps (±36px over the rise = depth behind slits).
-      const slicePar = "translateY(" + ((gp - 0.5) * 72).toFixed(2) + "px)";
-      for (const im of sliceImgsARef.current) {
-        if (im) im.style.transform = slicePar;
-      }
-      for (const im of sliceImgsBRef.current) {
-        if (im) im.style.transform = slicePar;
+      // DESKTOP: the shared photo drifts ±36px behind the fixed gaps = depth behind slits.
+      // TOUCH: pin it flat — native (unsmoothed) scroll makes this counter-moving layer trail
+      // the finger, which is exactly what reads as the collage "dragging" while you scroll.
+      // Dirty-checked either way, so it writes at most once until the value changes.
+      const slicePar = coarse ? "translateY(0px)" : "translateY(" + ((gp - 0.5) * 72).toFixed(2) + "px)";
+      if (slicePar !== lastSlicePar) {
+        lastSlicePar = slicePar;
+        for (const im of sliceImgsARef.current) if (im) im.style.transform = slicePar;
+        for (const im of sliceImgsBRef.current) if (im) im.style.transform = slicePar;
       }
     };
     updateRef.current = update;
