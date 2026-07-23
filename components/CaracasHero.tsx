@@ -140,7 +140,7 @@ type Copy = {
     title: string; // head words of the heading
     titleAccent: string; // italic serif tail (pink marker sweep)
     blurb: string; // small muted line beside the title
-    items: { q: string; name: string; role: string }[]; // 10 — split 5/5 across the two marquee rows
+    items: { q: string; name: string; role: string; avatar: string }[]; // 14 real reviews — split across the two marquee rows
     cta: string; // the button under the marquee → /recenzie
   };
   services: { title: string; cards: ServiceItem[]; list: ServiceItem[] };
@@ -240,58 +240,94 @@ const COPY: Record<"ro" | "ru", Copy> = {
     reviews: {
       title: "Ce spun",
       titleAccent: "pacienții noștri",
-      blurb: "Aproape 100 de recenzii reale pe Google — pacienți care ne-au încredințat zâmbetul lor.",
-      // 10 cards, split 5/5 across the two marquee rows (← top, bottom →)
+      blurb: "", // (removed per request — the title stands alone)
+      // 14 REAL Google reviews, curated from the clinic's 99 (shots/reviews-extracted.json).
+      // Shown identically in both locales — a review is a review, we don't translate them.
+      // `role` = the review's month, exactly as Google displays it; `avatar` = the real G avatar.
       items: [
         {
-          q: "Un rezultat vizibil de la prima ședință, fără nicio sensibilitate. Echipa m-a făcut să mă simt în largul meu din primul minut.",
-          name: "Elena Rusu",
-          role: "Albire profesională",
+          q: "Un ortodont excelent și un om deosebit! Dna Ana Bolgari face minuni cu breketii . ,,Uneori parcă mușc ceva mai tare” doar ca să dezlipesc o brachetă și să mai am ocazia să o vizitez. 😄 Profesionalism, atenție și o atmosferă extraordinară la fiecare consultație. Recomand din suflet!",
+          name: "Mihai Caracaci",
+          role: "acum 3 săptămâni",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjUVhgILPX5LhRtLloS4ZjmScatXTn0zvfpZcMlu48sTi0_3HncC=s64-c-rp-mo-br100",
         },
         {
-          q: "Implantul a fost mult mai simplu decât mă așteptam — totul planificat digital, fără surprize și fără durere.",
-          name: "Andrei Munteanu",
-          role: "Implant dentar",
+          q: "Din 2011 frecventam toata Familia, am avut si tratamente în Europa, dar la Caracas sunt Nr-1...Foarte Multumiti medicii Empatici si Profesionisti ,Sanatate Multa la Toți!!!!",
+          name: "Iurie Rodideal",
+          role: "acum 4 luni",
+          avatar: "https://lh3.googleusercontent.com/a/ACg8ocLJa64EOfZv85gmwfIOl-ePTmqP_F0zPAkGSvvP6dpt4xdz1g=s64-c-rp-mo-br100",
         },
         {
-          q: "După fațete nu mă mai feresc să zâmbesc în fotografii. Rezultatul arată complet natural — exact ce mi-am dorit.",
-          name: "Maria Popescu",
-          role: "Fațete ceramice",
+          q: "Superb!! Am o mare frica de durere,de dentiști,mai ales fiind insarcinata,însă domnul doctor a avut o mare grija cum sa lucreze, așa ușor și calitativ a lucrat că nu am simțit nimic🤗 mi-a dat o mare încredere să merg cu curaj de acum,chiar minunat,recomand din tot sufletul!! As da mai multe stele dar nu se poate.🩷",
+          name: "Stefania Cusnir",
+          role: "acum 2 ani",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjUfa7aBK8MguTdl8ehsikhrQYL2gNbSOgNjp8qE_LaI6ZaeaspQ=s64-c-rp-mo-br100",
         },
         {
-          q: "Vin la igienizare de doi ani și de fiecare dată plec cu zâmbetul proaspăt. Program flexibil și prețuri transparente.",
-          name: "Cristina Lungu",
-          role: "Igienizare & profilaxie",
+          q: "Am ramas extrem de multumita de serviciile clinicii. Recent am avut un detartraj la Ana Bolgari, procedura fiind realizata cu multa grija si atentie, iar la domnul Ion Bolgari am avut o extractie dentara si experienta a fost una fara stres si foarte profesionala. Cu siguranta mai revin. Multumesc!",
+          name: "Adelina Saratura",
+          role: "acum un an",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjXpc7T7IhYhOicoLc8sxy1vprTw02ZWUkk__oHyAztIJK7JalTW=s64-c-rp-mo-br100",
         },
         {
-          q: "Mi-a fost frică de dentist toată viața. Aici totul a fost calm, explicat pas cu pas — iar dintele a fost salvat.",
-          name: "Ion Ciobanu",
-          role: "Tratament de canal",
+          q: "Пользовался и пользуюсь услугами данной стоматологии. Всё на высшем уровне. До этого очень боялся уколов и лечения зубов в целом, после нескольких приёмов здесь страх ушёл. Неоднократно тут лечили кариес, удаляли зубы мудрости, ставили систему брекетов. Вам большое спасибо! Вы невероятные специалисты!",
+          name: "Danil Kolomiets",
+          role: "acum 3 luni",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjXEgJZoNaL-Wsf6fY8A0NQO-EV3A5GQnyvCvNi7kQ2dTvV2Khn6=s64-c-rp-mo-ba12-br100",
         },
         {
-          q: "Două coroane făcute într-o săptămână, cu programări exacte și fără durere. Se simt ca dinții mei.",
-          name: "Daniela Sturza",
-          role: "Coroane & punți",
+          q: "O echipa de profesioniști in tot sensul. Optează pentru păstrarea la maxim a dintelui natural. Mi-au construit jumătate de dinte și acum nici nu se vede diferența. Va mulțumesc din suflet🤗",
+          name: "Iuliana 7",
+          role: "acum 4 ani",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjXJPLrysPFp8djEZWYp_G6eiXJxZIVRUtE8js5w8ZK0xKtiMu9SKQ=s64-c-rp-mo-br100",
         },
         {
-          q: "Am venit cu copilul la prima consultație și am rămas amândoi pacienți. Multă răbdare și explicații pe înțelesul tuturor.",
-          name: "Victoria Botnaru",
-          role: "Consultație & profilaxie",
+          q: "Cea mai bună clinică, servicii de cea mai înaltă calitate din Chișinău.",
+          name: "Elena Vezetiu",
+          role: "acum 2 ani",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjX0Y1263dSzvUjoX-tyRzCEPhI8hXoVPB3Qsm9y2NQu3qMeLp9N=s64-c-rp-mo-br100",
         },
         {
-          q: "O plombă refăcută atât de frumos încât nu o mai găsesc nici eu. Materiale bune și lucru foarte îngrijit.",
-          name: "Ana Guțu",
-          role: "Obturații estetice",
+          q: "Am stat acolo timp de 9 ani pentru un proiect personal major. Apoi i-am adus pe tatăl și mama mea. L-am recomandat multor prieteni. Am amintiri EXCEPȚIONALE despre întregul personal. Și mai presus de toate, o muncă excepțională care rezistă și astăzi: 10 tratamente de canal și 10 coroane de zirconiu. Extracția unui măsele de minte strâmb. RECOMANDAT CU CĂLDURĂ.",
+          name: "LUCA GRAZIANI",
+          role: "acum un an",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjWfYFLBvqQI_v3cYfNjepInHFPnoz99cLtGgkjRV1qd1bA4pMIzKQ=s64-c-rp-mo-ba12-br100",
         },
         {
-          q: "La 62 de ani am din nou cu ce mesteca. Toată reconstrucția a decurs exact cum mi-a fost prezentată la început.",
-          name: "Vasile Ceban",
-          role: "All-on-X",
+          q: "Am avut o experiență excelentă la această clinică stomatologică!!! Personalul este foarte profesionist, iar tratamentele sunt efectuate cu multă grijă și atenție. Atmosfera este primitoare și relaxantă, iar echipamentele sunt moderne. Recomand cu încredere pentru orice problemă dentară!",
+          name: "Eudochia Duduc",
+          role: "acum un an",
+          avatar: "https://lh3.googleusercontent.com/a/ACg8ocLN3TtXg9q4GSyqXN9057jIprN9feL5t-e6JN_cix2swljGew=s64-c-rp-mo-br100",
         },
         {
-          q: "M-au primit în aceeași zi cu o durere acută. Problema rezolvată într-o oră, iar prețul — exact cel anunțat.",
-          name: "Natalia Railean",
-          role: "Urgență stomatologică",
+          q: "Recomand cu încredere medicul ortodont Bolgari Ana! Probabil printre putinii medici ortodonti in special in Chisinau care ii pasa cu adevarat de rezultatul final si de sanatatea pacientului.",
+          name: "V M",
+          role: "acum 5 ani",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjXW5mg9WFL-m39jqbRAm_-eeAlx9bcvu9eP-N-4FOqRYpyQr4CN=s64-c-rp-mo-ba12-br100",
+        },
+        {
+          q: "Клинику рекомендую, все врачи очень внимательные и профессионалы. У меня было сложное удаление зуба мудрости, очень боялась, но Иван Георгиевич Каракаш, все сделал быстро и не так больно как я ожидала. Так же делала чистку зубов у аккуратного и заботливого врача Анны Болгарь, результатом очень довольна.",
+          name: "Natalia Vitvitskaya",
+          role: "acum un an",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjXp_65LxweNwWzeDC6KgVeruJEW0RqiadO0WZcnF6mVoO1XhAmr5w=s64-c-rp-mo-ba12-br100",
+        },
+        {
+          q: "Profesionalism, atenție, acuratețe si multa grija fata de pacienți. Recomand cu încredere aceasta clinica!",
+          name: "Covali Elena",
+          role: "acum 3 ani",
+          avatar: "https://lh3.googleusercontent.com/a/ACg8ocKJASR4Gr_vlVE-2NHkKRbLZe4taRZ71dntmwDjN6mThC_0ag=s64-c-rp-mo-br100",
+        },
+        {
+          q: "În primul rând, ca medic, sunt surprins de profesionalismul lor, care, din păcate, este destul de rar întâlnit în zilele noastre. În cazul meu, ortodontul care m-a ajutat să iau o decizie finală cu privire la aparatele dentare aici, în Moldova, mi-a spus clar (în sfârșit))) foarte inteligent și amabil, de încredere. Am auzit că au unul dintre cei mai buni endodonți din oraș, vom încerca să-l vedem. Îi recomand cu siguranță!",
+          name: "Mark Manson J.",
+          role: "acum 5 luni",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjVIj6QUDFqXKlFr3u4MvkWSMvqOiEexZLnmsCpe_Wq0itYmuiA=s64-c-rp-mo-br100",
+        },
+        {
+          q: "Прекрасное место с высококлассными специалистами. Наименее болезненные процедуры по сравнению с другими клиниками.",
+          name: "Александр Мордвинов",
+          role: "acum 7 ani",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjWTfJSancs3L_iaTIWdObIYCBOKlUbOEurlIePgVjfyHPloy0Pm=s64-c-rp-mo-br100",
         },
       ],
       cta: "Lasă o recenzie",
@@ -576,58 +612,93 @@ const COPY: Record<"ro" | "ru", Copy> = {
     reviews: {
       title: "Что говорят",
       titleAccent: "наши пациенты",
-      blurb: "Почти 100 настоящих отзывов в Google — пациенты, доверившие нам свою улыбку.",
-      // 10 карточек, по 5 в каждом из двух рядов бегущей ленты
+      blurb: "", // (removed per request — the title stands alone)
+      // Same 14 REAL Google reviews as the RO locale — a review is a review, shown as-is
+      // (mostly RO/RU text). role = the review's month, exactly as Google displays it.
       items: [
         {
-          q: "Заметный результат уже после первого сеанса, без всякой чувствительности. Команда расположила к себе с первой минуты.",
-          name: "Elena Rusu",
-          role: "Профессиональное отбеливание",
+          q: "Un ortodont excelent și un om deosebit! Dna Ana Bolgari face minuni cu breketii . ,,Uneori parcă mușc ceva mai tare” doar ca să dezlipesc o brachetă și să mai am ocazia să o vizitez. 😄 Profesionalism, atenție și o atmosferă extraordinară la fiecare consultație. Recomand din suflet!",
+          name: "Mihai Caracaci",
+          role: "acum 3 săptămâni",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjUVhgILPX5LhRtLloS4ZjmScatXTn0zvfpZcMlu48sTi0_3HncC=s64-c-rp-mo-br100",
         },
         {
-          q: "Имплантация оказалась куда проще, чем я ожидал — всё спланировано в цифре, без сюрпризов и без боли.",
-          name: "Andrei Munteanu",
-          role: "Зубной имплант",
+          q: "Din 2011 frecventam toata Familia, am avut si tratamente în Europa, dar la Caracas sunt Nr-1...Foarte Multumiti medicii Empatici si Profesionisti ,Sanatate Multa la Toți!!!!",
+          name: "Iurie Rodideal",
+          role: "acum 4 luni",
+          avatar: "https://lh3.googleusercontent.com/a/ACg8ocLJa64EOfZv85gmwfIOl-ePTmqP_F0zPAkGSvvP6dpt4xdz1g=s64-c-rp-mo-br100",
         },
         {
-          q: "После виниров я больше не стесняюсь улыбаться на фотографиях. Результат выглядит абсолютно естественно.",
-          name: "Maria Popescu",
-          role: "Керамические виниры",
+          q: "Superb!! Am o mare frica de durere,de dentiști,mai ales fiind insarcinata,însă domnul doctor a avut o mare grija cum sa lucreze, așa ușor și calitativ a lucrat că nu am simțit nimic🤗 mi-a dat o mare încredere să merg cu curaj de acum,chiar minunat,recomand din tot sufletul!! As da mai multe stele dar nu se poate.🩷",
+          name: "Stefania Cusnir",
+          role: "acum 2 ani",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjUfa7aBK8MguTdl8ehsikhrQYL2gNbSOgNjp8qE_LaI6ZaeaspQ=s64-c-rp-mo-br100",
         },
         {
-          q: "Прихожу на гигиену уже два года, и каждый раз ухожу с обновлённой улыбкой. Гибкий график и прозрачные цены.",
-          name: "Cristina Lungu",
-          role: "Гигиена и профилактика",
+          q: "Am ramas extrem de multumita de serviciile clinicii. Recent am avut un detartraj la Ana Bolgari, procedura fiind realizata cu multa grija si atentie, iar la domnul Ion Bolgari am avut o extractie dentara si experienta a fost una fara stres si foarte profesionala. Cu siguranta mai revin. Multumesc!",
+          name: "Adelina Saratura",
+          role: "acum un an",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjXpc7T7IhYhOicoLc8sxy1vprTw02ZWUkk__oHyAztIJK7JalTW=s64-c-rp-mo-br100",
         },
         {
-          q: "Я всю жизнь боялся стоматологов. Здесь всё было спокойно, объяснили каждый шаг — и зуб удалось спасти.",
-          name: "Ion Ciobanu",
-          role: "Лечение каналов",
+          q: "Пользовался и пользуюсь услугами данной стоматологии. Всё на высшем уровне. До этого очень боялся уколов и лечения зубов в целом, после нескольких приёмов здесь страх ушёл. Неоднократно тут лечили кариес, удаляли зубы мудрости, ставили систему брекетов. Вам большое спасибо! Вы невероятные специалисты!",
+          name: "Danil Kolomiets",
+          role: "acum 3 luni",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjXEgJZoNaL-Wsf6fY8A0NQO-EV3A5GQnyvCvNi7kQ2dTvV2Khn6=s64-c-rp-mo-ba12-br100",
         },
         {
-          q: "Две коронки за неделю, с точными записями и без боли. Ощущаются как собственные зубы.",
-          name: "Daniela Sturza",
-          role: "Коронки и мосты",
+          q: "O echipa de profesioniști in tot sensul. Optează pentru păstrarea la maxim a dintelui natural. Mi-au construit jumătate de dinte și acum nici nu se vede diferența. Va mulțumesc din suflet🤗",
+          name: "Iuliana 7",
+          role: "acum 4 ani",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjXJPLrysPFp8djEZWYp_G6eiXJxZIVRUtE8js5w8ZK0xKtiMu9SKQ=s64-c-rp-mo-br100",
         },
         {
-          q: "Пришла с ребёнком на первую консультацию — и мы оба остались пациентами. Много терпения и понятные объяснения.",
-          name: "Victoria Botnaru",
-          role: "Консультация и профилактика",
+          q: "Cea mai bună clinică, servicii de cea mai înaltă calitate din Chișinău.",
+          name: "Elena Vezetiu",
+          role: "acum 2 ani",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjX0Y1263dSzvUjoX-tyRzCEPhI8hXoVPB3Qsm9y2NQu3qMeLp9N=s64-c-rp-mo-br100",
         },
         {
-          q: "Пломбу переделали так красиво, что я и сама её не нахожу. Хорошие материалы и очень аккуратная работа.",
-          name: "Ana Guțu",
-          role: "Эстетические пломбы",
+          q: "Am stat acolo timp de 9 ani pentru un proiect personal major. Apoi i-am adus pe tatăl și mama mea. L-am recomandat multor prieteni. Am amintiri EXCEPȚIONALE despre întregul personal. Și mai presus de toate, o muncă excepțională care rezistă și astăzi: 10 tratamente de canal și 10 coroane de zirconiu. Extracția unui măsele de minte strâmb. RECOMANDAT CU CĂLDURĂ.",
+          name: "LUCA GRAZIANI",
+          role: "acum un an",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjWfYFLBvqQI_v3cYfNjepInHFPnoz99cLtGgkjRV1qd1bA4pMIzKQ=s64-c-rp-mo-ba12-br100",
         },
         {
-          q: "В 62 года мне снова есть чем жевать. Вся реконструкция прошла ровно так, как её представили в начале.",
-          name: "Vasile Ceban",
-          role: "All-on-X",
+          q: "Am avut o experiență excelentă la această clinică stomatologică!!! Personalul este foarte profesionist, iar tratamentele sunt efectuate cu multă grijă și atenție. Atmosfera este primitoare și relaxantă, iar echipamentele sunt moderne. Recomand cu încredere pentru orice problemă dentară!",
+          name: "Eudochia Duduc",
+          role: "acum un an",
+          avatar: "https://lh3.googleusercontent.com/a/ACg8ocLN3TtXg9q4GSyqXN9057jIprN9feL5t-e6JN_cix2swljGew=s64-c-rp-mo-br100",
         },
         {
-          q: "Меня приняли в тот же день с острой болью. Проблему решили за час, а цена — ровно та, что назвали.",
-          name: "Natalia Railean",
-          role: "Неотложная помощь",
+          q: "Recomand cu încredere medicul ortodont Bolgari Ana! Probabil printre putinii medici ortodonti in special in Chisinau care ii pasa cu adevarat de rezultatul final si de sanatatea pacientului.",
+          name: "V M",
+          role: "acum 5 ani",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjXW5mg9WFL-m39jqbRAm_-eeAlx9bcvu9eP-N-4FOqRYpyQr4CN=s64-c-rp-mo-ba12-br100",
+        },
+        {
+          q: "Клинику рекомендую, все врачи очень внимательные и профессионалы. У меня было сложное удаление зуба мудрости, очень боялась, но Иван Георгиевич Каракаш, все сделал быстро и не так больно как я ожидала. Так же делала чистку зубов у аккуратного и заботливого врача Анны Болгарь, результатом очень довольна.",
+          name: "Natalia Vitvitskaya",
+          role: "acum un an",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjXp_65LxweNwWzeDC6KgVeruJEW0RqiadO0WZcnF6mVoO1XhAmr5w=s64-c-rp-mo-ba12-br100",
+        },
+        {
+          q: "Profesionalism, atenție, acuratețe si multa grija fata de pacienți. Recomand cu încredere aceasta clinica!",
+          name: "Covali Elena",
+          role: "acum 3 ani",
+          avatar: "https://lh3.googleusercontent.com/a/ACg8ocKJASR4Gr_vlVE-2NHkKRbLZe4taRZ71dntmwDjN6mThC_0ag=s64-c-rp-mo-br100",
+        },
+        {
+          q: "În primul rând, ca medic, sunt surprins de profesionalismul lor, care, din păcate, este destul de rar întâlnit în zilele noastre. În cazul meu, ortodontul care m-a ajutat să iau o decizie finală cu privire la aparatele dentare aici, în Moldova, mi-a spus clar (în sfârșit))) foarte inteligent și amabil, de încredere. Am auzit că au unul dintre cei mai buni endodonți din oraș, vom încerca să-l vedem. Îi recomand cu siguranță!",
+          name: "Mark Manson J.",
+          role: "acum 5 luni",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjVIj6QUDFqXKlFr3u4MvkWSMvqOiEexZLnmsCpe_Wq0itYmuiA=s64-c-rp-mo-br100",
+        },
+        {
+          q: "Прекрасное место с высококлассными специалистами. Наименее болезненные процедуры по сравнению с другими клиниками.",
+          name: "Александр Мордвинов",
+          role: "acum 7 ani",
+          avatar: "https://lh3.googleusercontent.com/a-/ALV-UjWTfJSancs3L_iaTIWdObIYCBOKlUbOEurlIePgVjfyHPloy0Pm=s64-c-rp-mo-br100",
         },
       ],
       cta: "Оставить отзыв",

@@ -30,24 +30,12 @@ const INK = "#161516"; // the site ink
 const ACCENT = "#eb7180"; // brand coral (the stars)
 const FONT = "var(--sans)";
 
-// Stock portraits (Unsplash CDN, every ID verified live AND looked at — the
-// people read as patients of all ages; none used elsewhere on the site).
-const AV = (id: string) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&q=80&w=112&h=112&crop=faces`;
-// one avatar per review, in ITEM ORDER (10)
-const AVATARS = [
-  AV("1494790108377-be9c29b29330"), // laughing woman
-  AV("1500648767791-00dcc994a43e"), // smiling man
-  AV("1580489944761-15a19d654956"), // wide-smile woman
-  AV("1544005313-94ddf0286df2"), // soft-smile woman
-  AV("1507003211169-0a1dd7228f2d"), // broad-smile man
-  AV("1607746882042-944635dfe10e"), // gentle-smile woman
-  AV("1573496359142-b8d87734a5a2"), // smiling young woman
-  AV("1531746020798-e6953c6e8e04"), // calm young woman
-  AV("1472099645785-5658abf4ff4e"), // older man, glasses, warm smile
-  AV("1508214751196-bcfd4ca60f91"), // smiling blonde woman
-];
-
-type Review = { q: string; name: string; role: string };
+// Reviews are REAL Google reviews (extracted 2026-07-22 from the clinic's own
+// listing via the ListReviews RPC — see scripts/scrape-final.mjs and
+// shots/reviews-extracted.json for all 99; 14 are curated here). Each item carries its
+// reviewer's actual Google avatar (lh3.googleusercontent.com, =s128 for 2×
+// the 40px slot); `role` is the review's month, not an invented treatment.
+type Review = { q: string; name: string; role: string; avatar: string };
 
 // the multicolor Google "G" — the cards read as Google reviews (per user)
 function GoogleG({ size = 18 }: { size?: number }) {
@@ -73,7 +61,7 @@ function Stars() {
   );
 }
 
-function ReviewCard({ r, avatar, dark }: { r: Review; avatar: string; dark: boolean }) {
+function ReviewCard({ r, dark }: { r: Review; dark: boolean }) {
   return (
     <div
       className="cd-rev-card"
@@ -108,7 +96,7 @@ function ReviewCard({ r, avatar, dark }: { r: Review; avatar: string; dark: bool
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "auto", paddingTop: "20px" }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- tiny CDN avatar, sized here */}
         <img
-          src={avatar}
+          src={r.avatar}
           alt=""
           width={40}
           height={40}
@@ -137,7 +125,7 @@ export default function ReviewsSection({
   title: string;
   titleAccent: string; // italic serif tail — gets the pink marker sweep
   blurb: string;
-  items: Review[]; // 10 — split 5/5 across the two marquee rows
+  items: Review[]; // 14 real reviews — split evenly across the two marquee rows
   cta: string; // "Lasă o recenzie" → /recenzie
   serif: string;
 }) {
@@ -166,7 +154,9 @@ export default function ReviewsSection({
     return () => io.disconnect();
   }, [title]);
 
-  const rows = [items.slice(0, 5), items.slice(5, 10)];
+  // split evenly across the two rows (← top, bottom →); an odd count puts the extra on top
+  const half = Math.ceil(items.length / 2);
+  const rows = [items.slice(0, half), items.slice(half)];
 
   return (
     <section id="recenzii" style={{ position: "relative", zIndex: 2, background: LIGHT, overflow: "hidden" }}>
@@ -202,20 +192,22 @@ export default function ReviewsSection({
               <span className="cd-mark-text">{titleAccent}</span>
             </span>
           </h2>
-          <p
-            style={{
-              fontFamily: FONT,
-              fontSize: "clamp(14px, 1.05vw, 17px)",
-              fontWeight: 400,
-              lineHeight: 1.5,
-              color: "rgba(22,21,22,0.55)",
-              margin: 0,
-              maxWidth: "34ch",
-              paddingBottom: "0.5em", // rides near the title's baseline, not its cap height
-            }}
-          >
-            {blurb}
-          </p>
+          {blurb && (
+            <p
+              style={{
+                fontFamily: FONT,
+                fontSize: "clamp(14px, 1.05vw, 17px)",
+                fontWeight: 400,
+                lineHeight: 1.5,
+                color: "rgba(22,21,22,0.55)",
+                margin: 0,
+                maxWidth: "34ch",
+                paddingBottom: "0.5em", // rides near the title's baseline, not its cap height
+              }}
+            >
+              {blurb}
+            </p>
+          )}
         </div>
 
         {/* ── the two marquee rows: ← top, bottom → ── */}
@@ -231,7 +223,6 @@ export default function ReviewsSection({
                       <ReviewCard
                         key={i}
                         r={r}
-                        avatar={AVATARS[ri * 5 + i]}
                         // alternate tones; offset the second row so a dark card
                         // never sits directly under another dark card
                         dark={(i + ri) % 2 === 0}
