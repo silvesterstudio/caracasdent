@@ -1261,12 +1261,11 @@ export default function CaracasHero({
     // couple dozen chars, not the whole ~230-char paragraph) — this avoids a
     // per-frame style-recalc storm across every span.
     let prevOpac: number[] = [];
-    // per-frame write guards (mobile frame budget) + input mode. On touch, scrolling
-    // is native (Lenis smooths the wheel only), so scroll-driven transforms trail the
-    // finger by a frame; `coarse` lets the heaviest parallax opt out on phones.
+    // per-frame write guards — skip identical transform writes while the section is
+    // outside the scrub. Behaviour-neutral (motion is unchanged); just avoids redundant
+    // style writes on idle/pinned frames.
     let lastSlicePar = "";
     let lastContainerGp = -1;
-    const coarse = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
     const update = () => {
       if (!rootRef.current) return;
@@ -1297,16 +1296,12 @@ export default function CaracasHero({
         lastContainerGp = gp;
         if (mediaWrapRef.current) mediaWrapRef.current.style.transform = "translateY(-" + par.toFixed(2) + "vh)";
         if (videoUiRef.current) videoUiRef.current.style.transform = "translateY(-" + (par * 0.7).toFixed(2) + "vh)";
-        if (goalRef.current) {
-          // DESKTOP rises across the WHOLE scrub (reaches place at p=1) for a seamless 1×
-          // sticky hand-off. MOBILE (≤860) rises FAST then HOLDS: there the collage is
-          // bottom-pinned under a tall heading→chunk stack, so the slow full-scrub rise
-          // slid it up over the last ~40% of scroll and read as the photo "growing". Frame
-          // it by ~p0.44, then hold — the collage arrives, then sits still while the chunk
-          // reveals against it (matching how the desktop side column already behaves).
-          const rise = window.innerWidth <= 860 ? cl((p - 0.091) / 0.35) : gp;
-          goalRef.current.style.transform = "translateY(" + ((1 - rise) * 100).toFixed(3) + "%)";
-        }
+        // rises across the WHOLE scrub (reaches place at p=1), SAME on mobile and desktop.
+        // The chunk's letter-by-letter reveal is paced to this rate (pVis in measure()), so
+        // the text finishes framing exactly as the reveal begins and then sweeps WITH scroll
+        // progress. Do NOT shortcut this rise — an early frame-then-hold leaves the chunk
+        // sitting grey, then reveals in a late rush (breaks the scroll-linked reveal).
+        if (goalRef.current) goalRef.current.style.transform = "translateY(" + ((1 - gp) * 100).toFixed(3) + "%)";
       }
 
       // 6. chunk reveal: ROW-SYNCED. Each row starts revealing the moment its top rises
@@ -1398,11 +1393,9 @@ export default function CaracasHero({
       //    (both slideshow buffers) gets the SAME translateY each frame — so the
       //    slices always stay aligned with each other while the picture drifts
       //    slowly behind the fixed gaps (±36px over the rise = depth behind slits).
-      // DESKTOP: the shared photo drifts ±36px behind the fixed gaps = depth behind slits.
-      // TOUCH: pin it flat — native (unsmoothed) scroll makes this counter-moving layer trail
-      // the finger, which is exactly what reads as the collage "dragging" while you scroll.
-      // Dirty-checked either way, so it writes at most once until the value changes.
-      const slicePar = coarse ? "translateY(0px)" : "translateY(" + ((gp - 0.5) * 72).toFixed(2) + "px)";
+      // the shared photo drifts ±36px behind the fixed gaps = depth behind the slits (same
+      // on mobile + desktop). Dirty-checked so the 8 imgs are written at most once per value.
+      const slicePar = "translateY(" + ((gp - 0.5) * 72).toFixed(2) + "px)";
       if (slicePar !== lastSlicePar) {
         lastSlicePar = slicePar;
         for (const im of sliceImgsARef.current) if (im) im.style.transform = slicePar;
