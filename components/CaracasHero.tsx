@@ -55,6 +55,14 @@ const DOCTOR_CANDIDS = [
   U("1588776814546-daab30f310ce", 700, 900), // "woman in white scrub suit" — verified dental-context at-work shot
   U("1663185551550-f8f56529ac5e", 700, 900),
 ];
+// page freeze while the menu sheet is open, for devices WITHOUT Lenis (touch —
+// SmoothScroll skips it there): the sheet is position:fixed, so hiding overflow
+// on the root stops the page behind it; the sheet's own scroller keeps working.
+const lockPage = (lock: boolean) => {
+  document.documentElement.style.overflow = lock ? "hidden" : "";
+  document.body.style.overflow = lock ? "hidden" : "";
+};
+
 // ── "Cine suntem?" — ONE tall photo at a time shared by all 4 collage strips. Each
 //    strip is a clipped window onto its quarter of the current image, so the 12px
 //    gaps read as cuts through a single picture (and it parallaxes behind them).
@@ -1588,9 +1596,11 @@ export default function CaracasHero({
   // selector, the very top, or the footer/contact at the bottom of the document).
   const menuNav = (target: string) => {
     setMenuOpen(false);
-    // the sheet freeze STOPPED Lenis; restart it NOW — the [menuOpen] effect only
-    // restarts it after the re-render, which is too late for the scroll below
+    // the sheet freeze STOPPED Lenis (or overflow-locked the page on touch);
+    // release it NOW — the [menuOpen] effect only releases after the re-render,
+    // which is too late for the scroll below
     if (lenis) lenis.start();
+    else lockPage(false);
     if (target === "top") goTo(0);
     else if (target === "footer") goTo("#formular"); // the footer FORM, not the page's last pixel
     else if (target === "cine") {
@@ -1606,10 +1616,16 @@ export default function CaracasHero({
   useEffect(() => {
     menuOpenRef.current = menuOpen;
     updateRef.current();
-    if (!lenis) return;
-    if (menuOpen) lenis.stop();
-    else lenis.start();
-    return () => lenis.start();
+    if (lenis) {
+      if (menuOpen) lenis.stop();
+      else lenis.start();
+      return () => lenis.start();
+    }
+    // touch (no Lenis mounted): freeze the page behind the fixed sheet the plain-CSS
+    // way — the sheet is position:fixed, so hiding root overflow stops the page
+    // while the sheet's own inner scroller keeps working.
+    lockPage(menuOpen);
+    return () => lockPage(false);
   }, [menuOpen, lenis]);
 
   return (

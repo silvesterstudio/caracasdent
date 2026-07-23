@@ -777,7 +777,9 @@ button:hover > .cd-roll > span,
     flex-direction: column !important;
     /* fits WITHOUT scrolling on phones (all sizes are vh-scaled); auto is a
        safety valve ONLY for extreme short-landscape viewports — hidden would
-       amputate the bottom bar there */
+       amputate the bottom bar there. contain: its scroll must not CHAIN to the
+       page behind the sheet (no Lenis freeze on touch — only the overflow lock) */
+    overscroll-behavior: contain;
     overflow-y: auto !important;
     padding: 60px 20px 16px !important;
     gap: 12px !important;
